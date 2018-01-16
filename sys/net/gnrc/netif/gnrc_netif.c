@@ -817,6 +817,13 @@ int gnrc_netif_ipv6_get_iid(gnrc_netif_t *netif, eui64_t *eui64)
                 }
                 break;
 #endif
+#ifdef MODULE_NORDIC_SOFTDEVICE_BLE
+            case NETDEV_TYPE_BLE:
+                assert(netif->l2addr_len == sizeof(eui64_t));
+                memcpy(eui64, netif->l2addr, sizeof(eui64_t));
+                eui64->uint8[0] ^= 0x02;
+                return 0;
+#endif
 #ifdef MODULE_CC110X
             case NETDEV_TYPE_CC110X:
                 assert(netif->l2addr_len == 1U);
@@ -1112,6 +1119,7 @@ bool gnrc_netif_is_6ln(const gnrc_netif_t *netif)
     switch (netif->device_type) {
         case NETDEV_TYPE_IEEE802154:
         case NETDEV_TYPE_CC110X:
+        case NETDEV_TYPE_BLE:
         case NETDEV_TYPE_NRFMIN:
             return true;
         default:
@@ -1127,7 +1135,8 @@ static void _update_l2addr_from_dev(gnrc_netif_t *netif)
     netopt_t opt = NETOPT_ADDRESS;
 
     switch (netif->device_type) {
-#ifdef MODULE_NETDEV_IEEE802154
+#if defined(MODULE_NETDEV_IEEE802154) || defined(MODULE_NORDIC_SOFTDEVICE_BLE)
+        case NETDEV_TYPE_BLE:
         case NETDEV_TYPE_IEEE802154: {
                 uint16_t tmp;
 
@@ -1186,6 +1195,11 @@ static void _init_from_device(gnrc_netif_t *netif)
 #ifdef MODULE_GNRC_IPV6
             netif->ipv6.mtu = ETHERNET_DATA_LEN;
 #endif
+            break;
+#endif
+#ifdef MODULE_NORDIC_SOFTDEVICE_BLE
+        case NETDEV_TYPE_BLE:
+            netif->ipv6.mtu = IPV6_MIN_MTU;
             break;
 #endif
         default:
