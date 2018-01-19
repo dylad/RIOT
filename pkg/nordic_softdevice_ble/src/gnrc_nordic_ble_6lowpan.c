@@ -65,15 +65,6 @@
 
 /* XXX: netdev required by gnrc_netif, but not implemented fully for
  * nordic_softdevice_ble for legacy reasons */
-int _netdev_init(netdev_t *netdev);
-int _netdev_get(netdev_t *netdev, netopt_t opt,
-                       void *value, size_t max_len);
-int _netdev_set(netdev_t *netdev, netopt_t opt,
-                       const void *value, size_t value_len);
-
-static netdev_t _ble_dummy_dev = {
-    .driver = &_ble_netdev_driver,
-};
 
 static char _stack[(THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE)];
 
@@ -285,12 +276,6 @@ static const gnrc_netif_ops_t _ble_ops = {
     .msg_handler = _netif_msg_handler,
 };
 
-void gnrc_nordic_ble_6lowpan_init(void)
-{
-    gnrc_netif_create(_stack, sizeof(_stack), BLE_PRIO,
-                      "ble", &_ble_dummy_dev, &_ble_ops);
-}
-
 static const netdev_driver_t _ble_netdev_driver = {
     .send = NULL,
     .recv = NULL,
@@ -299,3 +284,13 @@ static const netdev_driver_t _ble_netdev_driver = {
     .get  = _netdev_get,
     .set  = _netdev_set,
 };
+
+static netdev_t _ble_dummy_dev = {
+    .driver = &_ble_netdev_driver,
+};
+
+void gnrc_nordic_ble_6lowpan_init(void)
+{
+    gnrc_netif_create(_stack, sizeof(_stack), BLE_PRIO,
+                      "ble", &_ble_dummy_dev, &_ble_ops);
+}
