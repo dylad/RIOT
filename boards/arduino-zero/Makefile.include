@@ -2,7 +2,15 @@
 export CPU = samd21
 export CPU_MODEL = samd21g18a
 
-# set edbg device type
-EDBG_DEVICE_TYPE = atmel_cm0p
+ifeq ($(PROGRAMMER),bossa)
+  # by default, we use BOSSA to flash this board and take into account the
+  # preinstalled Arduino bootloader. ROM_OFFSET skips the space taken by
+  # such bootloader.
+  ROM_OFFSET ?= 0x2000
+  include $(RIOTMAKE)/tools/bossa.inc.mk
+else
+  # set edbg device type
+  EDBG_DEVICE_TYPE = atmel_cm0p
+endif
 
 include $(RIOTMAKE)/boards/sam0.inc.mk
