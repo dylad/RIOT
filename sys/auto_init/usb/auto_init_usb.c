@@ -40,6 +40,11 @@ usbus_cdcecm_device_t cdcecm;
 static usbus_dfu_device_t dfu;
 #endif
 
+#ifdef MODULE_USBUS_MSC
+#include "usb/msc.h"
+#include "usb/usbus/msc/scsi.h"
+#endif
+
 static char _stack[USBUS_STACKSIZE];
 static usbus_t usbus;
 
