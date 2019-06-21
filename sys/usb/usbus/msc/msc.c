@@ -47,8 +47,6 @@ static const usbus_handler_driver_t msc_driver = {
     .setup_handler = _setup_handler,
 };
 
-static usbus_msc_device_t msc_handler;
-
 static size_t _gen_msc_descriptor(usbus_t *usbus, void *arg)
 {
     (void)arg;
@@ -69,24 +67,26 @@ static const usbus_hdr_gen_funcs_t _msc_descriptor = {
     .len_type = USBUS_HDR_LEN_FIXED,
 };
 
-int mass_storage_init(usbus_t *usbus)
+int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler)
 {
-    printf("mass storage init:%p",&msc_handler);
-    memset(&msc_handler, 0, sizeof(usbus_msc_device_t));
-    msc_handler.usbus = usbus;
-    msc_handler.handler_ctrl.driver = &msc_driver;
-    usbus_register_event_handler(usbus, ((usbus_handler_t*)(&msc_handler)));
+    assert(usbus);
+    assert(handler);
+    memset(handler, 0, sizeof(usbus_msc_device_t));
+    handler->usbus = usbus;
+    handler->handler_ctrl.driver = &msc_driver;
+    usbus_register_event_handler(usbus, (usbus_handler_t*)handler);
     return 0;
 }
 
 static void _init(usbus_t *usbus, usbus_handler_t *handler)
 {
+    DEBUG("MSC: initialization\n");
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
 
     msc->msc_hdr.next = NULL;
     msc->msc_hdr.funcs = &_msc_descriptor;
     msc->msc_hdr.arg = msc;
-    printf("msc_hdr:%p\n",&(msc->msc_hdr));
+
     /* Instantiate interfaces */
     memset(&msc->iface, 0, sizeof(usbus_interface_t));
     /* Configure Interface 0 as control interface */
@@ -97,9 +97,9 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     msc->iface.handler = handler;
 
     /* Create required endpoints */
-    usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK, USB_EP_DIR_IN, 64);
+    msc->ep_in = usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK, USB_EP_DIR_IN, 64);
     msc->ep_in->interval = 20;
-    usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK, USB_EP_DIR_OUT, 64);
+    msc->ep_out = usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK, USB_EP_DIR_OUT, 64);
     msc->ep_out->interval = 20;
 
     /* Add interfaces to the stack */
@@ -110,7 +110,8 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
 
     usbus_enable_endpoint(msc->ep_in);
     usbus_enable_endpoint(msc->ep_out);
-    return;
+
+    usbus_handler_set_flag(handler, USBUS_HANDLER_FLAG_RESET);
 }
 
 static int _setup_handler(usbus_t *usbus, usbus_handler_t *handler,

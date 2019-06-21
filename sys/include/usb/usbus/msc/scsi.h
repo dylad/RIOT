@@ -76,7 +76,7 @@ typedef struct __attribute__((packed)) {
     uint8_t  status;
 } msc_csw_buf_t;
 
-int mass_storage_init(usbus_t *usbus);
+int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler);
 
 int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len);
 
