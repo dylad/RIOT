@@ -117,44 +117,38 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
 static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
                           usbus_control_request_state_t state, usb_setup_t *setup)
 {
-     (void)usbus;
-      (void)handler;
-       (void)state;
-        (void)setup;
-    #if 0
+    (void)usbus;
+    (void)handler;
+    (void)state;
+
     (void)usbus;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-
-    DEBUG("ReqSetup:0x%x\n", pkt->request);
-    switch(pkt->request) {
+    static usbopt_enable_t enable = USBOPT_ENABLE;
+    DEBUG("ReqSetup:0x%x\n", setup->request);
+    switch(setup->request) {
         case USB_SETUP_REQ_GET_MAX_LUN:
-            static const usbopt_enable_t enable = USBOPT_ENABLE;
             /* Stall as we don't support this feature */
-            usbdev_ep_set(msc->ep_in.ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
+            usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
             return 0;
         case USB_SETUP_REQ_RESET:
             DEBUG("TODO: implement reset setup request\n");
             break;
         default:
-            DEBUG("default handle setup rqt:0x%x\n", pkt->request);
+            DEBUG("default handle setup rqt:0x%x\n", setup->request);
             return -1;
     }
-    #endif
-    return 0;
+    return 1;
 }
 
 static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
                               usbdev_ep_t *ep, usbus_event_transfer_t event)
 {
-     (void)usbus;
-      (void)handler;
-       (void)ep;
+       (void)usbus;
        (void)event;
-    #if 0
-    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    (void)usbus;
 
-    if (ep == msc->ep_out.ep) {
+    //usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+
+    if (ep->dir == USB_EP_DIR_OUT) {
         size_t len;
         /* Retrieve incoming data */
         usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
@@ -162,9 +156,10 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
             /* Process incoming endpoint buffer */
             scsi_process_cmd(usbus, handler, ep, len);
         }
-        return 0;
+        usbdev_ep_ready(ep, 0);
     }
-    else if (ep == msc->ep_in.ep) {
+    else if (ep->dir == USB_EP_DIR_IN) {
+        DEBUG("EP IN DATA TO HANDLE");
      //   size_t len;
         /* Retrieve incoming data */
       //  usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
@@ -174,7 +169,7 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
       //  }
         //usbdev_ep_ready(ep, 0);
     }
-    #endif
+
 }
 
 static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
@@ -183,6 +178,8 @@ static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
      (void)usbus;
       (void)handler;
        (void)event;
+
+    DEBUG("Unhandled event :0x%x\n", event);
     #if 0
     switch(event) {
         case USBUS_MSG_TYPE_SETUP_RQ:
