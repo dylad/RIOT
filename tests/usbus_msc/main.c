@@ -1,6 +1,6 @@
 
  /*
- * Copyright (C) 2019 Koen Zandberg
+ * Copyright (C) 2019 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -8,13 +8,13 @@
  */
 
  /**
- * @ingroup     examples
+ * @ingroup     tests
  * @{
  *
  * @file
- * @brief       Example application for demonstrating the RIOT USB stack
+ * @brief       Test application for demonstrating the RIOT USB stack
  *
- * @author      Koen Zandberg <koen@bergzand.net>
+ * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  *
  * @}
  */
