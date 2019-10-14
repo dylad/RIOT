@@ -43,6 +43,7 @@ static usbus_dfu_device_t dfu;
 #ifdef MODULE_USBUS_MSC
 #include "usb/msc.h"
 #include "usb/usbus/msc/scsi.h"
+usbus_msc_device_t msc;
 #endif
 
 static char _stack[USBUS_STACKSIZE];
@@ -71,6 +72,9 @@ void auto_init_usb(void)
     usbus_dfu_init(&usbus, &dfu, USB_DFU_PROTOCOL_RUNTIME_MODE);
 #endif
 
+#ifdef MODULE_USBUS_MSC
+    mass_storage_init(&usbus, &msc);
+#endif
     /* Finally initialize USBUS thread */
     usbus_create(_stack, USBUS_STACKSIZE, USBUS_PRIO, USBUS_TNAME, &usbus);
 }

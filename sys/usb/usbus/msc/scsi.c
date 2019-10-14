@@ -26,6 +26,7 @@
 #include "usb/msc.h"
 #include "usb/usbus/msc/scsi.h"
 #include "board.h"
+#include "byteorder.h"
 
 #include <string.h>
 
@@ -134,12 +135,12 @@ void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw)
       (cbw->cb[4] <<  8) |
       (cbw->cb[5] <<  0);
 
-  offset = n * 512;
+  offset = n * 64;
     /* Get number of blocks to transfer */
-  n = (cbw->cb[7] <<  8) |
+  nb = (cbw->cb[7] <<  8) |
       (cbw->cb[8] <<  0);
 
-   nb = n * 512;
+
 
    printf("offset:%lx, block xfer:%ld,total:%ld\n",offset, nb,cbw->data_len);
    uint32_t len = cbw->data_len;
@@ -191,31 +192,14 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
 void _scsi_read_capacity(usbus_handler_t *handler, usbdev_ep_t *ep) {
     (void)ep;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    //msc_read_capa_pkt_t pkt2;
-    uint8_t pkt[8];
+    msc_read_capa_pkt_t pkt2;
     size_t len = sizeof(msc_read_capa_pkt_t);
-    memset(pkt, 0, len);
-    uint32_t MSC_BlockCount = 1;
-    //pkt2.blk_len = 512;
-    /*
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    pkt2.last_blk = byteorder_swaps((uint32_t)USBUS_MSC_BLOCK_NUM);
-    pkt2.blk_len  = byteorder_swaps((uint32_t)USBUS_MSC_BLOCKSIZE);
-#endif
-    */
-    pkt[ 0] = ((MSC_BlockCount - 1) >> 24) & 0xFF;
-    pkt[ 1] = ((MSC_BlockCount - 1) >> 16) & 0xFF;
-    pkt[ 2] = ((MSC_BlockCount - 1) >>  8) & 0xFF;
-    pkt[ 3] = ((MSC_BlockCount - 1) >>  0) & 0xFF;
 
-    /* Block Length */
-    pkt[ 4] = (USBUS_MSC_BLOCKSIZE >> 24) & 0xFF;
-    pkt[ 5] = (USBUS_MSC_BLOCKSIZE >> 16) & 0xFF;
-    pkt[ 6] = (USBUS_MSC_BLOCKSIZE >>  8) & 0xFF;
-    pkt[ 7] = (USBUS_MSC_BLOCKSIZE >>  0) & 0xFF;
+    pkt2.blk_len = 512;
+    pkt2.last_blk = 0;
 
     /* copy into ep buffer */
-    memcpy(msc->ep_in->ep->buf, pkt, len);
+    memcpy(msc->ep_in->ep->buf, &pkt2, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
     
 }
@@ -313,7 +297,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             puts("TODO: SCSI_READ_FORMAT_CAPACITIES");
             break;
         case SCSI_READ_CAPACITY:
-            puts("TODO: SCSI_READ_CAPACITY");
+            puts("SCSI_READ_CAPACITY");
             _scsi_read_capacity(handler, ep);
             break;
         case SCSI_READ10:
@@ -329,12 +313,12 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
         default:
             printf("Unhandled SCSI command:0x%x", cbw->cb[0]);
     }
-    _scsi_gen_csw(handler, cbw->tag, 1, 0);
+    _scsi_gen_csw(handler, cbw->tag, 0, 0);
     return 0;
 }
 
 int _scsi_gen_csw(usbus_handler_t *handler, uint32_t tag, uint8_t status, size_t len) {
-    (void)tag;
+
     (void)len;
     msc_csw_buf_t csw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;

@@ -129,7 +129,7 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
         case USB_SETUP_REQ_GET_MAX_LUN:
             /* Stall as we don't support this feature */
             usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
-            return 0;
+            break;
         case USB_SETUP_REQ_RESET:
             DEBUG("TODO: implement reset setup request\n");
             break;
@@ -159,15 +159,14 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         usbdev_ep_ready(ep, 0);
     }
     else if (ep->dir == USB_EP_DIR_IN) {
-        DEBUG("EP IN DATA TO HANDLE");
-     //   size_t len;
+        size_t len;
         /* Retrieve incoming data */
-      //  usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
-        //if (len > 0) {
+        usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
+        if (len > 0) {
             /* Process incoming endpoint buffer */
-          //  scsi_process_in_cmd(usbus, handler, ep, len);
-      //  }
-        //usbdev_ep_ready(ep, 0);
+            //scsi_process_cmd(usbus, handler, ep, len);
+        }
+        usbdev_ep_ready(ep, 0);
     }
 
 }
@@ -175,20 +174,16 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
 static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
                           usbus_event_usb_t event)
 {
-     (void)usbus;
-      (void)handler;
-       (void)event;
-
-    DEBUG("Unhandled event :0x%x\n", event);
-    #if 0
+    (void) usbus;
+    (void)handler;
     switch(event) {
-        case USBUS_MSG_TYPE_SETUP_RQ:
-            return _handle_setup(usbus, handler, (usb_setup_t*)arg);
-        case USBUS_MSG_TYPE_TR_COMPLETE:
-            return _handle_tr_complete(usbus, handler, (usbdev_ep_t*)arg);
+        case USBUS_EVENT_USB_RESET:
+          //  puts("EVENT RESET\n");
+            break;
+
         default:
-            puts("Unhandled event :0x%x\n");
-            return -1;
+            DEBUG("Unhandled event :0x%x\n", event);
+            break;
     }
-    #endif
+
 }

@@ -48,7 +48,7 @@ extern "c" {
 #define USB_MSC_PROTOCOL_BULK_ONLY    0x50
 
 #ifndef USBUS_MSC_BLOCKSIZE
-#define USBUS_MSC_BLOCKSIZE           512
+#define USBUS_MSC_BLOCKSIZE           64
 #endif /*USBUS_MSC_BLOCKSIZE */
 
 #ifndef USBUS_MSC_BLOCK_NUM
