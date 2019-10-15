@@ -146,7 +146,15 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
        (void)usbus;
        (void)event;
 
-    //usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+
+
+    if(event == USBUS_EVENT_TRANSFER_STALL) {
+        printf("HolySHIIIIIIIIIIT\n");
+    }
+    else{
+        puts("EVENT");
+    }
 
     if (ep->dir == USB_EP_DIR_OUT) {
         size_t len;
@@ -159,15 +167,19 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         usbdev_ep_ready(ep, 0);
     }
     else if (ep->dir == USB_EP_DIR_IN) {
-        size_t len;
-        /* Retrieve incoming data */
-        usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
-        if (len > 0) {
+        /* Check if a CSW command block must be send */
+        if (msc->cmd.tag) {
+            scsi_gen_csw(handler, msc->cmd);
+            msc->cmd.tag = 0;
+        }
+       // usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
+      //  if (len > 0) {
             /* Process incoming endpoint buffer */
             //scsi_process_cmd(usbus, handler, ep, len);
-        }
-        usbdev_ep_ready(ep, 0);
+     //   }
+      //  usbdev_ep_ready(ep, 0);
     }
+
 
 }
 

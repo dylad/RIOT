@@ -9,6 +9,8 @@
 #ifndef USB_SCSI_H
 #define USB_SCSI_H
 
+#include "usb/msc.h"
+
 #ifdef __cplusplus
 extern "c" {
 #endif
@@ -79,7 +81,7 @@ typedef struct __attribute__((packed)) {
 int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler);
 
 int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len);
-
+int scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd);
 #ifdef __cplusplus
 }
 #endif

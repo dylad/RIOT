@@ -37,7 +37,6 @@
 #define PRODUCT_ID "RIOT_MSC_DISK"
 #define PRODUCT_REV " 1.0"
 
-static int _scsi_gen_csw(usbus_handler_t *handler, uint32_t tag, uint8_t status, size_t len);
 static const uint8_t CLEUSB[] = {0, 0, 0, 0, 0, 0, 0, 0,
                             'R', 'I', 'O', 'T', '-', 'O', 'S', 0,
                             'a', 'b', 'c', 'd', 'e', 'f', 'g', 0,
@@ -108,10 +107,10 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
 
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     (void)ep;
-
+       printf("flags:0x%x,len:%ld\n", cbw->flags,cbw->data_len);
     if (cbw->data_len != 0) {
         static const usbopt_enable_t enable = USBOPT_ENABLE;
-        printf("flags:0x%x,len:%ld\n", cbw->flags,cbw->data_len);
+ 
         if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
             usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
         }
@@ -119,6 +118,8 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
             usbdev_ep_set(msc->ep_out->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
         }
     }
+    msc->cmd.tag = 0;
+    scsi_gen_csw(handler, msc->cmd);
     return;
 }
 
@@ -168,7 +169,7 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
     msc_inquiry_pkt_t pkt;
     size_t len = sizeof(msc_inquiry_pkt_t);
     memset(&pkt, 0, len);
-
+    printf("inq_len:%d",len);
     /* prepare pkt response */
     pkt.type = SCSI_INQUIRY_CONNECTED;
     pkt.removable = 0x80;
@@ -189,14 +190,14 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
     return;
 }
 
-void _scsi_read_capacity(usbus_handler_t *handler, usbdev_ep_t *ep) {
-    (void)ep;
+void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw) {
+
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     msc_read_capa_pkt_t pkt2;
     size_t len = sizeof(msc_read_capa_pkt_t);
-
-    pkt2.blk_len = 512;
-    pkt2.last_blk = 0;
+    printf("CBW.len:%ld cb_len:%d\n", cbw->data_len, cbw->cb_len);
+    pkt2.blk_len = byteorder_swapl(512);
+    pkt2.last_blk = byteorder_swapl(1);
 
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt2, len);
@@ -206,11 +207,10 @@ void _scsi_read_capacity(usbus_handler_t *handler, usbdev_ep_t *ep) {
 
 void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    (void)cbw;
     uint8_t pkt[4];
     size_t len = 4;
     memset(&pkt, 0, len);
-
+    printf("CBW.len:%ld cb_len:%d\n", cbw->data_len, cbw->cb_len);
     pkt[0] = 0x3;
 
     /* copy into ep buffer */
@@ -241,6 +241,8 @@ void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
 int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len) {
     (void)usbus;
 
+    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+
     if (len == sizeof(msc_cbw_buf_t)) {
        // puts("Command Block Wrapper");
     }
@@ -258,6 +260,11 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
         return -1;
     }
 
+    /* Store command for CSW generation */
+    msc->cmd.tag = cbw->tag;
+    msc->cmd.status = 0;
+    msc->cmd.len = 0;
+
     switch(cbw->cb[0]) {
         case SCSI_TEST_UNIT_READY:
             puts("SCSI_TEST_UNIT_READY");
@@ -271,7 +278,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             puts("TODO: SCSI_FORMAT_UNIT");
             break;
         case SCSI_INQUIRY:
-            puts("SCSI_INQUIRY");
+            //puts("SCSI_INQUIRY");
             _scsi_inquiry(handler, ep);
             break;
         case SCSI_START_STOP_UNIT:
@@ -298,7 +305,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             break;
         case SCSI_READ_CAPACITY:
             puts("SCSI_READ_CAPACITY");
-            _scsi_read_capacity(handler, ep);
+            _scsi_read_capacity(handler, cbw);
             break;
         case SCSI_READ10:
             puts("SCSI_READ10");
@@ -313,20 +320,18 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
         default:
             printf("Unhandled SCSI command:0x%x", cbw->cb[0]);
     }
-    _scsi_gen_csw(handler, cbw->tag, 0, 0);
+
     return 0;
 }
 
-int _scsi_gen_csw(usbus_handler_t *handler, uint32_t tag, uint8_t status, size_t len) {
-
-    (void)len;
+int scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd) {
     msc_csw_buf_t csw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     memset(&csw, 0, sizeof(msc_csw_buf_t));
     csw.signature = SCSI_CSW_SIGNATURE;
-    csw.tag = tag;
-    csw.data_left = 0;
-    csw.status = status;
+    csw.tag = cmd.tag;
+    csw.data_left = cmd.len;
+    csw.status = cmd.status;
     memcpy(msc->ep_in->ep->buf, &csw, sizeof(msc_csw_buf_t));
     usbdev_ep_ready(msc->ep_in->ep, sizeof(msc_csw_buf_t));
     return 0;

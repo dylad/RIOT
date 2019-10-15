@@ -69,7 +69,13 @@ typedef struct __attribute__((packed)) {
 //    uint8_t capabalities;
 //    uint8_t data_if;
 } usb_desc_msc_t;
-    
+
+typedef struct {
+    uint32_t tag;
+    size_t len;
+    uint8_t status;
+} cbw_info_t;
+
 struct usbus_msc_device {
     usbus_handler_t handler_ctrl;
     usbus_interface_t iface;
@@ -77,6 +83,7 @@ struct usbus_msc_device {
     usbus_endpoint_t *ep_out;
     usbus_hdr_gen_t msc_hdr;
     usbus_t *usbus;
+    cbw_info_t cmd;
 };
 
 #ifdef __cplusplus
