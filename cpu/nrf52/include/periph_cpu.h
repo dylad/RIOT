@@ -42,7 +42,7 @@ extern "C" {
 #define SPI_SCKSEL          (dev(bus)->PSEL.SCK)
 #define SPI_MOSISEL         (dev(bus)->PSEL.MOSI)
 #define SPI_MISOSEL         (dev(bus)->PSEL.MISO)
-#ifndef CPU_MODEL_NRF52840XXAA
+#if !(defined(CPU_MODEL_NRF52840XXAA) || defined(CPU_MODEL_NRF52833XXAA))
 #define UART_IRQN           (UARTE0_UART0_IRQn)
 #endif
 /** @} */
@@ -161,7 +161,7 @@ typedef struct {
     uint32_t pin[PWM_CHANNELS];         /**< PWM out pins */
 } pwm_conf_t;
 
-#ifdef CPU_MODEL_NRF52840XXAA
+#if defined(CPU_MODEL_NRF52840XXAA) || defined(CPU_MODEL_NRF52833XXAA)
 /**
  * @brief   Structure for UART configuration data
  */

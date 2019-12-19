@@ -15,6 +15,8 @@ USEMODULE += nimble_svc_gatt
 # We also use the AD part of the BLE helper module
 USEMODULE += bluetil_ad
 
+FEATURE_REQUIRED += periph_gpio
+
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
 # development process:

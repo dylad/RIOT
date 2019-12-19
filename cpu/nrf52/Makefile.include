@@ -17,6 +17,10 @@ ifneq (,$(filter nrf52832xxaa,$(CPU_MODEL)))
   ROM_LEN ?= 0x80000
   RAM_LEN ?= 0x10000
 endif
+ifneq (,$(filter nrf52833xxaa,$(CPU_MODEL)))
+  ROM_LEN ?= 0x80000
+  RAM_LEN ?= 0x20000
+endif
 ifneq (,$(filter nrf52840xxaa,$(CPU_MODEL)))
   ROM_LEN ?= 0x100000
   RAM_LEN ?= 0x40000
