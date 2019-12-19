@@ -27,6 +27,9 @@
 #ifdef CPU_MODEL_NRF52832XXAA
 #include "vendor/nrf52.h"
 #include "vendor/nrf52_bitfields.h"
+#elif defined(CPU_MODEL_NRF52833XXAA)
+#include "vendor/nrf52833.h"
+#include "vendor/nrf52833_bitfields.h"
 #elif defined(CPU_MODEL_NRF52840XXAA)
 #include "vendor/nrf52840.h"
 #include "vendor/nrf52840_bitfields.h"
@@ -46,6 +49,8 @@ extern "C" {
 #define CPU_FLASH_BASE                  (0x00000000)
 #ifdef CPU_MODEL_NRF52832XXAA
 #define CPU_IRQ_NUMOF                   (38U)
+#elif CPU_MODEL_NRF52833XXAA
+#define CPU_IRQ_NUMOF                   (46U)
 #elif CPU_MODEL_NRF52840XXAA
 #define CPU_IRQ_NUMOF                   (46U)
 #endif
@@ -58,6 +63,8 @@ extern "C" {
 #define FLASHPAGE_SIZE                  (4096U)
 
 #if defined(CPU_MODEL_NRF52832XXAA)
+#define FLASHPAGE_NUMOF                 (128U)
+#elif defined(CPU_MODEL_NRF52833XXAA)
 #define FLASHPAGE_NUMOF                 (128U)
 #elif defined(CPU_MODEL_NRF52840XXAA)
 #define FLASHPAGE_NUMOF                 (256U)
