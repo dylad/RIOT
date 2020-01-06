@@ -399,6 +399,11 @@ ifneq (,$(filter mrf24j40,$(USEMODULE)))
   FEATURES_REQUIRED += periph_spi
 endif
 
+ifneq (,$(filter ms8607,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_i2c
+  USEMODULE += xtimer
+endif
+
 ifneq (,$(filter mtd_%,$(USEMODULE)))
   USEMODULE += mtd
 

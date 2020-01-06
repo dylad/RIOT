@@ -1,3 +1,4 @@
+$(info    USEMODULE is $(USEMODULE))
 ifneq (,$(filter ad7746,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ad7746/include
 endif
@@ -220,6 +221,10 @@ endif
 
 ifneq (,$(filter mrf24j40,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/mrf24j40/include
+endif
+
+ifneq (,$(filter ms8607,$(USEMODULE)))
+  USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ms8607/include
 endif
 
 ifneq (,$(filter my9221,$(USEMODULE)))
