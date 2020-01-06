@@ -43,7 +43,7 @@ int main(void)
 
     puts("ADXL362 sensor driver test application\n");
 
-    printf("Initializing ADXL362 sensor at SPI_%i, CS 0x%04lx... ",
+    printf("Initializing ADXL362 sensor at SPI_%i, CS 0x%04x... ",
         TEST_ADXL362_SPI, TEST_ADXL362_CS);
     res = adxl362_init(&dev, TEST_ADXL362_SPI, TEST_ADXL362_CS);
     if (res < 0) {
