@@ -535,7 +535,7 @@ int adxl362_read_temp(const adxl362_t *dev, int32_t *temp)
     return 0;
 }
 
-static bool adxl362_self_test_check(int16_t value, int16_t min, int16_t max)
+static bool adxl362_self_test_check(int32_t value, int32_t min, int32_t max)
 {
     bool pass = true;
     DEBUG("adxl362_self_test_check:   [%6d, %6d]  ", (int)min, (int)max);
