@@ -1,0 +1,10 @@
+MODULE = rpmsg-lite
+
+
+CFLAGS  += -Wno-unused-parameter -Wno-sign-compare
+
+SRC = rpmsg_queue.c \
+      rpmsg_ns.c \
+      rpmsg_lite.c \
+
+include $(RIOTBASE)/Makefile.base

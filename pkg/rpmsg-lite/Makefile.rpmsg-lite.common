@@ -1,0 +1,8 @@
+MODULE = rpmsg-lite-llist
+
+
+CFLAGS  += -Wno-unused-parameter -Wno-sign-compare
+
+SRC = llist.c
+
+include $(RIOTBASE)/Makefile.base
