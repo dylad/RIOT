@@ -1,0 +1,8 @@
+MODULE = rpmsg-lite-virtio
+
+
+CFLAGS  += -Wno-unused-parameter -Wno-sign-compare
+
+SRC = virtqueue.c
+
+include $(RIOTBASE)/Makefile.base

@@ -1,0 +1,4 @@
+USEMODULE += rpmsg_lite_contrib
+USEMODULE += xtimer
+USEMODULE += sema
+USEMODULE += shell
