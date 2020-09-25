@@ -2,5 +2,3 @@ INCLUDES += -I$(RIOTBASE)/pkg/rpmsg-lite/include
 INCLUDES += -I$(PKGDIRBASE)/rpmsg-lite/lib/include
 
 DIRS += $(RIOTPKG)/rpmsg-lite/contrib
-
-PSEUDOMODULES += rpmsg-lite_%

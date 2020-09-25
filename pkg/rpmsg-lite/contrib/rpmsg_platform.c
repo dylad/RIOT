@@ -11,9 +11,9 @@
 
 #include "rpmsg_platform.h"
 #include "rpmsg_env.h"
-#ifdef 0
+
 #include "clk_conf.h"
-#endif
+
 //#include "fsl_device_registers.h"
 //#include "fsl_mailbox.h"
 

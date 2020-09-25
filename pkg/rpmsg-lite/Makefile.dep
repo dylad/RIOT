@@ -1,4 +1,6 @@
-USEMODULE += rpmsg_lite_contrib
+USEMODULE += rpmsg-lite-contrib
+USEMODULE += rpmsg-lite-virtio
+USEMODULE += rpmsg-lite-llist
 USEMODULE += xtimer
 USEMODULE += sema
 USEMODULE += shell
