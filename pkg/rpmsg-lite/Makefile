@@ -7,8 +7,6 @@ PKG_BUILDDIR ?= $(PKGDIRBASE)/rpmsg-lite
 
 include $(RIOTBASE)/pkg/pkg.mk
 
-
-
 all:
 	"$(MAKE)" -C $(PKG_SOURCE_DIR)/lib/rpmsg_lite -f $(CURDIR)/Makefile.rpmsg-lite
 	"$(MAKE)" -C $(PKG_SOURCE_DIR)/lib/virtio -f $(CURDIR)/Makefile.rpmsg-lite.virtio

@@ -1,6 +1,5 @@
 MODULE = rpmsg-lite
 
-
 CFLAGS  += -Wno-unused-parameter -Wno-sign-compare
 
 SRC = rpmsg_queue.c \
