@@ -44,6 +44,14 @@ extern "c" {
 #define SCSI_VERSION_SCSI1              0x0001
 #define SCSI_VERSION_SCSI2              0x0002
 
+
+typedef struct __attribute__((packed)) {
+    uint8_t type;
+    uint8_t logical_unit;
+    uint8_t reserved[4];
+    uint8_t pad[6];
+} msc_test_unit_pkt_t;
+
 typedef struct __attribute__((packed)) {
     uint8_t type;
     uint8_t removable;

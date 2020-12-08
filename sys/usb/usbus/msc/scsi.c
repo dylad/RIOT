@@ -16,7 +16,6 @@
  */
 
 #include "thread.h"
-#include "kernel_types.h"
 #include "msg.h"
 #include "mutex.h"
 #include "usb/usbus.h"
@@ -38,8 +37,72 @@
 #define PRODUCT_REV " 1.0"
 
 static const uint8_t CLEUSB[] = {0, 0, 0, 0, 0, 0, 0, 0,
-                            'R', 'I', 'O', 'T', '-', 'O', 'S', 0,
-                            'a', 'b', 'c', 'd', 'e', 'f', 'g', 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
+                            0, 0, 0, 0, 0, 0, 0, 0,
                             0, 0, 0, 0, 0, 0, 0, 0,
                             0, 0, 0, 0, 0, 0, 0, 0,
                             0, 0, 0, 0, 0, 0, 0, 0,
@@ -107,10 +170,11 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
 
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     (void)ep;
-       printf("flags:0x%x,len:%ld\n", cbw->flags,cbw->data_len);
+
+    DEBUG("flags:0x%x,len:%ld\n", cbw->flags, cbw->data_len);
     if (cbw->data_len != 0) {
         static const usbopt_enable_t enable = USBOPT_ENABLE;
- 
+        DEBUG("HOLYSHIT BIG TROUBLE\n\n\n\n");
         if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
             usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
         }
@@ -118,9 +182,6 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
             usbdev_ep_set(msc->ep_out->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
         }
     }
-    msc->cmd.tag = 0;
-    scsi_gen_csw(handler, msc->cmd);
-    return;
 }
 
 void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw) {
@@ -143,13 +204,13 @@ void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw)
 
 
 
-   printf("offset:%lx, block xfer:%ld,total:%ld\n",offset, nb,cbw->data_len);
+   printf("offset:%lx, block xfer:%ld,total:%ld\n",offset, nb, cbw->data_len);
    uint32_t len = cbw->data_len;
     do {
         len -= ep->len;
         if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
             printf("offset:%ld,len:%ld\n",offset,len);
-            memcpy(msc->ep_in->ep->buf, &CLEUSB[offset], ep->len);
+            memcpy(msc->ep_in->ep->buf, &CLEUSB[offset%1024], ep->len);
             usbdev_ep_ready(msc->ep_in->ep, ep->len);
         }
         else {
@@ -157,8 +218,7 @@ void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw)
         }
         
         offset += ep->len;
-    } while(offset < 512);
-
+    } while(len);
     return;
 }
 
@@ -169,7 +229,6 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
     msc_inquiry_pkt_t pkt;
     size_t len = sizeof(msc_inquiry_pkt_t);
     memset(&pkt, 0, len);
-    printf("inq_len:%d",len);
     /* prepare pkt response */
     pkt.type = SCSI_INQUIRY_CONNECTED;
     pkt.removable = 0x80;
@@ -197,7 +256,7 @@ void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw) {
     size_t len = sizeof(msc_read_capa_pkt_t);
     printf("CBW.len:%ld cb_len:%d\n", cbw->data_len, cbw->cb_len);
     pkt2.blk_len = byteorder_swapl(512);
-    pkt2.last_blk = byteorder_swapl(1);
+    pkt2.last_blk = byteorder_swapl(15);
 
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt2, len);
@@ -240,16 +299,8 @@ void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
 
 int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len) {
     (void)usbus;
-
+    (void)len;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-
-    if (len == sizeof(msc_cbw_buf_t)) {
-       // puts("Command Block Wrapper");
-    }
-    else {
-        printf("error receiving, ep->len:%d should be %d\n",len,sizeof(msc_cbw_buf_t));
-        return -1;
-    }
 
     /* store data into specific struct */
     msc_cbw_buf_t *cbw = (msc_cbw_buf_t*) ep->buf;
@@ -257,6 +308,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
     /* Check Command Block signature */
     if (cbw->signature != SCSI_CBW_SIGNATURE) {
         printf("Invalid CBW signature:0x%lx, abort\n", cbw->signature);
+        msc->cmd.status = -1;
         return -1;
     }
 
@@ -285,6 +337,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             puts("TODO: SCSI_START_STOP_UNIT");
             break;
         case SCSI_MEDIA_REMOVAL:
+            msc->cmd.status = 1;
             puts("SCSI_MEDIA_REMOVAL");
             break;
         case SCSI_MODE_SELECT6:
@@ -312,6 +365,8 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             _scsi_read10(handler, ep, cbw);
             break;
         case SCSI_WRITE10:
+            /* Unsupported feature */
+            msc->cmd.status = 1;
             puts("TODO: SCSI_WRITE10");
             break;
         case SCSI_VERIFY10:

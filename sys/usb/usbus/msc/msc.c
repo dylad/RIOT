@@ -16,7 +16,6 @@
  */
 
 #include "thread.h"
-#include "kernel_types.h"
 #include "msg.h"
 #include "mutex.h"
 #include "usb/descriptor.h"
@@ -59,12 +58,13 @@ static size_t _gen_msc_descriptor(usbus_t *usbus, void *arg)
     return sizeof(usb_desc_msc_t);
 }
 
-static const usbus_hdr_gen_funcs_t _msc_descriptor = {
-    .get_header = _gen_msc_descriptor,
+ static const usbus_descr_gen_funcs_t _msc_descriptor = {
+    .fmt_post_descriptor = _gen_msc_descriptor,
+    .fmt_pre_descriptor = NULL,
     .len = {
-            .fixed_len = sizeof(usb_desc_msc_t),
+        .fixed_len =  sizeof(usb_desc_msc_t),
     },
-    .len_type = USBUS_HDR_LEN_FIXED,
+    .len_type = USBUS_DESCR_LEN_FIXED,
 };
 
 int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler)
@@ -83,9 +83,9 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     DEBUG("MSC: initialization\n");
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
 
-    msc->msc_hdr.next = NULL;
-    msc->msc_hdr.funcs = &_msc_descriptor;
-    msc->msc_hdr.arg = msc;
+    msc->msc_descr.next = NULL;
+    msc->msc_descr.funcs = &_msc_descriptor;
+    msc->msc_descr.arg = msc;
 
     /* Instantiate interfaces */
     memset(&msc->iface, 0, sizeof(usbus_interface_t));
@@ -93,7 +93,7 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     msc->iface.class = USB_CLASS_MASS_STORAGE;
     msc->iface.subclass = USB_MSC_SUBCLASS_SCSI_TCS;
     msc->iface.protocol = USB_MSC_PROTOCOL_BULK_ONLY;
-    msc->iface.hdr_gen = &(msc->msc_hdr);
+    msc->iface.descr_gen = &(msc->msc_descr);
     msc->iface.handler = handler;
 
     /* Create required endpoints */
@@ -148,14 +148,6 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
 
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
 
-
-    if(event == USBUS_EVENT_TRANSFER_STALL) {
-        printf("HolySHIIIIIIIIIIT\n");
-    }
-    else{
-        puts("EVENT");
-    }
-
     if (ep->dir == USB_EP_DIR_OUT) {
         size_t len;
         /* Retrieve incoming data */
@@ -166,18 +158,11 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         }
         usbdev_ep_ready(ep, 0);
     }
-    else if (ep->dir == USB_EP_DIR_IN) {
-        /* Check if a CSW command block must be send */
-        if (msc->cmd.tag) {
-            scsi_gen_csw(handler, msc->cmd);
-            msc->cmd.tag = 0;
-        }
-       // usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
-      //  if (len > 0) {
-            /* Process incoming endpoint buffer */
-            //scsi_process_cmd(usbus, handler, ep, len);
-     //   }
-      //  usbdev_ep_ready(ep, 0);
+    
+    if (msc->cmd.tag) {
+        DEBUG("Generate Command Status Wrapper\n");
+        scsi_gen_csw(handler, msc->cmd);
+        msc->cmd.tag = 0;
     }
 
 

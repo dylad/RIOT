@@ -81,7 +81,7 @@ struct usbus_msc_device {
     usbus_interface_t iface;
     usbus_endpoint_t *ep_in;
     usbus_endpoint_t *ep_out;
-    usbus_hdr_gen_t msc_hdr;
+    usbus_descr_gen_t msc_descr;
     usbus_t *usbus;
     cbw_info_t cmd;
 };

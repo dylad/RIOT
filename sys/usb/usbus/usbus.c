@@ -372,7 +372,6 @@ static void _event_ep_cb(usbdev_ep_t *ep, usbdev_event_t event)
                     }
                     break;
                 case USBDEV_EVENT_TR_STALL:
-                puts("STALLLLLL");
                     if (usbus_handler_isset_flag(handler,
                                                  USBUS_HANDLER_FLAG_TR_STALL)) {
                         handler->driver->transfer_handler(usbus, handler, ep,
