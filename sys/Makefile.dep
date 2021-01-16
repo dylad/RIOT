@@ -995,6 +995,8 @@ ifneq (,$(filter usbus_msc,$(USEMODULE)))
   USEMODULE += iolist
   USEMODULE += fmt
   USEMODULE += usbus
+  USEMODULE += vfs
+  USEMODULE += mtd_sdcard
 endif
 
 ifneq (,$(filter uuid,$(USEMODULE)))

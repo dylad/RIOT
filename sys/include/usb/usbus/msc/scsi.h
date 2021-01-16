@@ -67,6 +67,7 @@ typedef struct __attribute__((packed)) {
     uint32_t last_blk;
     uint32_t blk_len;
 } msc_read_capa_pkt_t;
+
 /* Bulk-only Command Block Wrapper */
 typedef struct __attribute__((packed)) {
     uint32_t signature;

@@ -29,141 +29,22 @@
 
 #include <string.h>
 
-#define ENABLE_DEBUG    (1)
+/* SD-CARD specific */
+#include "mtd_sdcard.h"
+extern mtd_dev_t *mtd0;
+
+#define ENABLE_DEBUG    (0)
 #include "debug.h"
 
 #define VENDOR_ID "RIOT-OS"
 #define PRODUCT_ID "RIOT_MSC_DISK"
 #define PRODUCT_REV " 1.0"
 
-static const uint8_t CLEUSB[] = {0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0,
-                            0, 0, 0, 0, 0, 0, 0, 0};
+
+static void _xmit_ready(usbus_msc_device_t *msc)
+{
+    usbus_event_post(msc->usbus, &msc->xmit_event);
+}
 
 void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
                            msc_cbw_buf_t *cbw) {
@@ -186,39 +67,40 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
 
 void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw) {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    (void)msc;
-    uint32_t n;
-    uint32_t offset;
-    uint32_t nb;
+    int ret;
+    (void) ep;
+    /* A block is 512 bytes
+      offset are counted as block */
 
-    /* Get offset */
-  n = (cbw->cb[2] << 24) |
-      (cbw->cb[3] << 16) |
-      (cbw->cb[4] <<  8) |
-      (cbw->cb[5] <<  0);
+    /* Get first block number to read from */
+    msc->block = (cbw->cb[2] << 24) |
+             (cbw->cb[3] << 16) |
+             (cbw->cb[4] <<  8) |
+             (cbw->cb[5] <<  0);
 
-  offset = n * 64;
     /* Get number of blocks to transfer */
-  nb = (cbw->cb[7] <<  8) |
-      (cbw->cb[8] <<  0);
+    msc->block_nb = (cbw->cb[7] <<  8) |
+                    (cbw->cb[8] <<  0);
 
+    /* FIXME: find a better way to manage this */
+    msc->cmd.len = cbw->data_len;
 
+   printf("offset:%lx, block nb:%d, total:%ld\n",msc->block, msc->block_nb, cbw->data_len);
 
-   printf("offset:%lx, block xfer:%ld,total:%ld\n",offset, nb, cbw->data_len);
-   uint32_t len = cbw->data_len;
-    do {
-        len -= ep->len;
-        if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
-            printf("offset:%ld,len:%ld\n",offset,len);
-            memcpy(msc->ep_in->ep->buf, &CLEUSB[offset%1024], ep->len);
-            usbdev_ep_ready(msc->ep_in->ep, ep->len);
-        }
+    if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
+        /* Store first page into buffer */
+        ret = mtd_read_page(mtd0, msc->buffer, msc->block, 0, 512);
+        if (ret == 0) {
+            _xmit_ready(msc);
+        } 
         else {
-            puts("READ BAD");
+            puts("MTD FAILURE");
         }
-        
-        offset += ep->len;
-    } while(len);
+    }
+    else {
+        puts("READ BAD");
+    }
+
     return;
 }
 
@@ -252,14 +134,14 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
 void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw) {
 
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    msc_read_capa_pkt_t pkt2;
+    msc_read_capa_pkt_t pkt;
     size_t len = sizeof(msc_read_capa_pkt_t);
     printf("CBW.len:%ld cb_len:%d\n", cbw->data_len, cbw->cb_len);
-    pkt2.blk_len = byteorder_swapl(512);
-    pkt2.last_blk = byteorder_swapl(15);
+    pkt.blk_len = byteorder_swapl(SD_HC_BLOCK_SIZE);
+    pkt.last_blk = byteorder_swapl(15415296);
 
     /* copy into ep buffer */
-    memcpy(msc->ep_in->ep->buf, &pkt2, len);
+    memcpy(msc->ep_in->ep->buf, &pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
     
 }

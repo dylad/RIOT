@@ -31,6 +31,13 @@
 #define ENABLE_DEBUG    (1)
 #include "debug.h"
 
+
+/* SD-CARD specific */
+#include "mtd_sdcard.h"
+extern mtd_dev_t *mtd0;
+
+static unsigned char buff[512];
+
 static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
                           usbus_event_usb_t event);
 static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
@@ -67,6 +74,41 @@ static size_t _gen_msc_descriptor(usbus_t *usbus, void *arg)
     .len_type = USBUS_DESCR_LEN_FIXED,
 };
 
+static void _xfer_data( usbus_msc_device_t *msc)
+{
+    DEBUG_PUTS("MSC: XMIT EVENT");
+    /* Check if we have a block to read and transfer */
+    if (msc->block_nb) {
+        /* read buffer from mtd device */
+        if (msc->block_offset == 0) {
+            mtd_read_page(mtd0, msc->buffer, msc->block,0, 512);
+        }
+        /* Prepare endpoint buffer */
+        memcpy(msc->ep_in->ep->buf, &msc->buffer[msc->block_offset], 64);
+        /* Data prepared, signal ready to usbus */
+        usbdev_ep_ready(msc->ep_in->ep, 64);
+        /* Update offset for page buffer */
+        msc->block_offset += 64;
+        /* Decrement whole len */
+        msc->cmd.len -= 64;
+        /* whole buffer is empty, point to new block if any */
+        if (msc->block_offset >= 512) {
+            msc->block_offset = 0;
+            msc->block++;
+            msc->block_nb--;
+        }
+
+    }
+}
+static void _handle_xmit_event(event_t *ev)
+{
+
+    usbus_msc_device_t *msc = container_of(ev, usbus_msc_device_t,
+                                                 xmit_event);
+
+    _xfer_data(msc);
+}
+
 int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler)
 {
     assert(usbus);
@@ -75,6 +117,12 @@ int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler)
     handler->usbus = usbus;
     handler->handler_ctrl.driver = &msc_driver;
     usbus_register_event_handler(usbus, (usbus_handler_t*)handler);
+    printf("[MSC]: SD card init...");
+    if (mtd_init(mtd0) != 0) {
+        puts("[FAILED]");
+        return -1;
+    }
+    puts("[OK]");
     return 0;
 }
 
@@ -86,7 +134,12 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     msc->msc_descr.next = NULL;
     msc->msc_descr.funcs = &_msc_descriptor;
     msc->msc_descr.arg = msc;
-
+    msc->block_offset = 0;
+    msc->buffer = buff;
+    msc->block_nb = 0;
+    msc->block = 0;
+    /* Add event handlers */
+    msc->xmit_event.handler = _handle_xmit_event;
     /* Instantiate interfaces */
     memset(&msc->iface, 0, sizeof(usbus_interface_t));
     /* Configure Interface 0 as control interface */
@@ -158,8 +211,11 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         }
         usbdev_ep_ready(ep, 0);
     }
+    else {
+        _xfer_data(msc);
+    }
     
-    if (msc->cmd.tag) {
+    if (msc->cmd.tag && msc->cmd.len == 0) {
         DEBUG("Generate Command Status Wrapper\n");
         scsi_gen_csw(handler, msc->cmd);
         msc->cmd.tag = 0;
