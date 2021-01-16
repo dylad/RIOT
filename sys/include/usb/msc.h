@@ -86,6 +86,7 @@ struct usbus_msc_device {
     cbw_info_t cmd;
     //msc_cbw_buf_t *cbw;
     event_t xmit_event;                        /**< Transmit ready event */
+    uint8_t flags;
     uint8_t *buffer;
     uint32_t block;
     uint16_t block_nb;

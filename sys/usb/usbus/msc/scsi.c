@@ -64,10 +64,33 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
         }
     }
 }
+void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
+    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+
+    /* A block is 512 bytes
+      offset are counted as block */
+
+    /* Get first block number to read from */
+    msc->block = (cbw->cb[2] << 24) |
+             (cbw->cb[3] << 16) |
+             (cbw->cb[4] <<  8) |
+             (cbw->cb[5] <<  0);
+
+    /* Get number of blocks to transfer */
+    msc->block_nb = (cbw->cb[7] <<  8) |
+                    (cbw->cb[8] <<  0);
+
+    /* FIXME: find a better way to manage this */
+    msc->cmd.len = cbw->data_len;
+    msc->flags = 1;
+   printf("W:offset:%lx, block nb:%d, total:%ld\n",msc->block, msc->block_nb, cbw->data_len);
+
+    return;
+}
 
 void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw) {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    int ret;
+
     (void) ep;
     /* A block is 512 bytes
       offset are counted as block */
@@ -88,14 +111,7 @@ void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw)
    printf("offset:%lx, block nb:%d, total:%ld\n",msc->block, msc->block_nb, cbw->data_len);
 
     if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
-        /* Store first page into buffer */
-        ret = mtd_read_page(mtd0, msc->buffer, msc->block, 0, 512);
-        if (ret == 0) {
             _xmit_ready(msc);
-        } 
-        else {
-            puts("MTD FAILURE");
-        }
     }
     else {
         puts("READ BAD");
@@ -247,9 +263,8 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             _scsi_read10(handler, ep, cbw);
             break;
         case SCSI_WRITE10:
-            /* Unsupported feature */
-            msc->cmd.status = 1;
-            puts("TODO: SCSI_WRITE10");
+            puts("SCSI_WRITE10");
+            _scsi_write10(handler, cbw);
             break;
         case SCSI_VERIFY10:
             puts("TODO: SCSI_VERIFY10");
