@@ -28,7 +28,7 @@
 
 #include <string.h>
 
-#define ENABLE_DEBUG    (1)
+#define ENABLE_DEBUG    0
 #include "debug.h"
 
 
@@ -76,7 +76,6 @@ static size_t _gen_msc_descriptor(usbus_t *usbus, void *arg)
 
 static void _write_xfer(usbus_msc_device_t *msc) {
 /* Check if we have a block to read and transfer */
-    puts("WRITE XFER");
     if (msc->block_nb) {
         size_t len;
         /* Retrieve incoming data */
@@ -246,7 +245,7 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
     }
     
     if (msc->cmd.tag && msc->cmd.len == 0) {
-        DEBUG("Generate Command Status Wrapper\n");
+        puts("Generate Command Status Wrapper");
         scsi_gen_csw(handler, msc->cmd);
         msc->cmd.tag = 0;
         if (msc->flags) {
