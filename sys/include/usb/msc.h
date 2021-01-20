@@ -76,6 +76,14 @@ typedef struct {
     uint8_t status;
 } cbw_info_t;
 
+typedef enum {
+    WAITING,
+    WAIT_FOR_TRANSFER,
+    DATA_TRANSFER,
+    DATA_TRANSFER_LAST,
+    GEN_CSW
+} usbus_msc_state_t;
+
 struct usbus_msc_device {
     usbus_handler_t handler_ctrl;
     usbus_interface_t iface;
@@ -84,9 +92,9 @@ struct usbus_msc_device {
     usbus_descr_gen_t msc_descr;
     usbus_t *usbus;
     cbw_info_t cmd;
-    //msc_cbw_buf_t *cbw;
-    event_t xmit_event;                        /**< Transmit ready event */
-    uint8_t flags;
+    event_t rx_event;                        /**< Transmit ready event */
+    event_t tx_event;
+    usbus_msc_state_t state;
     uint8_t *buffer;
     uint32_t block;
     uint16_t block_nb;

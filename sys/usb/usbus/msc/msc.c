@@ -78,6 +78,7 @@ static void _write_xfer(usbus_msc_device_t *msc) {
 /* Check if we have a block to read and transfer */
     if (msc->block_nb) {
         size_t len;
+       // printf("write xfer:%d\n",msc->cmd.len);
         /* Retrieve incoming data */
         usbdev_ep_get(msc->ep_out->ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
         if (len > 0) {
@@ -95,6 +96,13 @@ static void _write_xfer(usbus_msc_device_t *msc) {
             msc->block_offset = 0;
             msc->block++;
             msc->block_nb--;
+        }
+        if (msc->cmd.len == 0) {
+            /* All blocks have been transferred, send CSW to host */
+            if (msc->state == DATA_TRANSFER) {
+                //puts("wr ended");
+                msc->state = GEN_CSW;
+            }
         }
     }
 }
@@ -123,12 +131,19 @@ static void _xfer_data( usbus_msc_device_t *msc)
         }
 
     }
+    else {
+        /* All blocks have been transferred, send CSW to host */
+        if (msc->state == DATA_TRANSFER) {
+            msc->state = GEN_CSW;
+        }
+    }
 }
-static void _handle_xmit_event(event_t *ev)
+
+static void _handle_rx_event(event_t *ev)
 {
 
     usbus_msc_device_t *msc = container_of(ev, usbus_msc_device_t,
-                                                 xmit_event);
+                                                 rx_event);
        _xfer_data(msc);
 }
 
@@ -161,9 +176,9 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     msc->buffer = buff;
     msc->block_nb = 0;
     msc->block = 0;
-    msc->flags = 0;
-    /* Add event handlers */
-    msc->xmit_event.handler = _handle_xmit_event;
+    msc->state = WAITING;
+     /* Add event handlers */
+    msc->rx_event.handler = _handle_rx_event;
     /* Instantiate interfaces */
     memset(&msc->iface, 0, sizeof(usbus_interface_t));
     /* Configure Interface 0 as control interface */
@@ -227,9 +242,11 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
 
     if (ep->dir == USB_EP_DIR_OUT) {
         size_t len;
-        if (msc->flags) {
+        /* Previous transfer is sent, send the next one */
+        if (msc->state == DATA_TRANSFER) {
             _write_xfer(msc);
         }
+        /* USB_EP_DIR_IN */
         else {
             /* Retrieve incoming data */
             usbdev_ep_get(ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
@@ -241,19 +258,22 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
         }
     }
     else {
-        _xfer_data(msc);
-    }
-    
-    if (msc->cmd.tag && msc->cmd.len == 0) {
-        puts("Generate Command Status Wrapper");
-        scsi_gen_csw(handler, msc->cmd);
-        msc->cmd.tag = 0;
-        if (msc->flags) {
-            msc->flags = 0;
+        /* Data Transfer pending */
+        if (msc->state == DATA_TRANSFER) {
+            _xfer_data(msc);
+        }
+        /* CBW answer was sent, prepare CSW */
+        else if (msc->state == WAIT_FOR_TRANSFER) {
+            msc->state = GEN_CSW;
         }
     }
-
-
+    
+    if (msc->cmd.tag && msc->cmd.len == 0 && msc->state == GEN_CSW) {
+       // puts("Generate Command Status Wrapper");
+        scsi_gen_csw(handler, msc->cmd);
+        msc->cmd.tag = 0;
+        msc->state = WAITING;
+    }
 }
 
 static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,

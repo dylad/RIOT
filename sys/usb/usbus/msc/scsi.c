@@ -41,9 +41,9 @@ extern mtd_dev_t *mtd0;
 #define PRODUCT_REV " 1.0"
 
 
-static void _xmit_ready(usbus_msc_device_t *msc)
+static void _rx_ready(usbus_msc_device_t *msc)
 {
-    usbus_event_post(msc->usbus, &msc->xmit_event);
+    usbus_event_post(msc->usbus, &msc->rx_event);
 }
 
 void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
@@ -62,6 +62,7 @@ void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
             usbdev_ep_set(msc->ep_out->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
         }
     }
+    msc->state = GEN_CSW;
 }
 void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
@@ -81,7 +82,7 @@ void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
 
     /* FIXME: find a better way to manage this */
     msc->cmd.len = cbw->data_len;
-    msc->flags = 1;
+    msc->state = DATA_TRANSFER;
 
     return;
 }
@@ -105,9 +106,10 @@ void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw)
 
     /* FIXME: find a better way to manage this */
     msc->cmd.len = cbw->data_len;
+    msc->state = DATA_TRANSFER;
 
     if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
-            _xmit_ready(msc);
+            _rx_ready(msc);
     }
     else {
         DEBUG_PUTS("READ BAD");
@@ -139,7 +141,7 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
-
+    msc->state = WAIT_FOR_TRANSFER;
     return;
 }
 
@@ -154,7 +156,7 @@ void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw) {
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
-    
+    msc->state = WAIT_FOR_TRANSFER;
 }
 
 void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
@@ -168,7 +170,7 @@ void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
-    
+    msc->state = WAIT_FOR_TRANSFER;
 }
 
 void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
@@ -187,7 +189,7 @@ void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
-    
+    msc->state = WAIT_FOR_TRANSFER;
 }
 
 int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len) {
@@ -221,6 +223,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             break;
         case SCSI_FORMAT_UNIT:
             DEBUG_PUTS("TODO: SCSI_FORMAT_UNIT");
+            msc->state=GEN_CSW;
             break;
         case SCSI_INQUIRY:
             //puts("SCSI_INQUIRY");
@@ -228,13 +231,16 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             break;
         case SCSI_START_STOP_UNIT:
             DEBUG_PUTS("TODO: SCSI_START_STOP_UNIT");
+            msc->state=GEN_CSW;
             break;
         case SCSI_MEDIA_REMOVAL:
             msc->cmd.status = 1;
             DEBUG_PUTS("SCSI_MEDIA_REMOVAL");
+            msc->state=GEN_CSW;
             break;
         case SCSI_MODE_SELECT6:
             DEBUG_PUTS("TODO: SCSI_MODE_SELECT6");
+            msc->state=GEN_CSW;
             break;
         case SCSI_MODE_SENSE6:
             DEBUG_PUTS("SCSI_MODE_SENSE6");
@@ -242,12 +248,15 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             break;
         case SCSI_MODE_SELECT10:
             DEBUG_PUTS("TODO: SCSI_MODE_SELECT10");
+            msc->state=GEN_CSW;
             break;
         case SCSI_MODE_SENSE10:
             DEBUG_PUTS("TODO: SCSI_MODE_SENSE10");
+            msc->state=GEN_CSW;
             break;
         case SCSI_READ_FORMAT_CAPACITIES:
             DEBUG_PUTS("TODO: SCSI_READ_FORMAT_CAPACITIES");
+            msc->state=GEN_CSW;
             break;
         case SCSI_READ_CAPACITY:
             DEBUG_PUTS("SCSI_READ_CAPACITY");
@@ -263,9 +272,11 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             break;
         case SCSI_VERIFY10:
             DEBUG_PUTS("TODO: SCSI_VERIFY10");
+            msc->state=GEN_CSW;
             break;
         default:
             DEBUG("Unhandled SCSI command:0x%x", cbw->cb[0]);
+            msc->state=GEN_CSW;
     }
 
     return 0;
