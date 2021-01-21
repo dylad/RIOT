@@ -23,6 +23,7 @@
 #include "usb/usbus/control.h"
 
 #include "usb/msc.h"
+#include "usb/usbus/msc.h"
 #include "usb/usbus/msc/scsi.h"
 #include "board.h"
 
@@ -147,7 +148,7 @@ static void _handle_rx_event(event_t *ev)
        _xfer_data(msc);
 }
 
-int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler)
+int usbus_msc_init(usbus_t *usbus, usbus_msc_device_t *handler)
 {
     assert(usbus);
     assert(handler);
@@ -155,7 +156,7 @@ int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler)
     handler->usbus = usbus;
     handler->handler_ctrl.driver = &msc_driver;
     usbus_register_event_handler(usbus, (usbus_handler_t*)handler);
-    printf("[MSC]: SD card init...");
+    printf("[MSC]: MTD init...");
     if (mtd_init(mtd0) != 0) {
         puts("[FAILED]");
         return -1;
@@ -184,7 +185,7 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     /* Configure Interface 0 as control interface */
     msc->iface.class = USB_CLASS_MASS_STORAGE;
     msc->iface.subclass = USB_MSC_SUBCLASS_SCSI_TCS;
-    msc->iface.protocol = USB_MSC_PROTOCOL_BULK_ONLY;
+    msc->iface.protocol = USB_MSC_PROTOCOL_BBB;
     msc->iface.descr_gen = &(msc->msc_descr);
     msc->iface.handler = handler;
 
@@ -210,13 +211,11 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
                           usbus_control_request_state_t state, usb_setup_t *setup)
 {
     (void)usbus;
-    (void)handler;
     (void)state;
 
-    (void)usbus;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     static usbopt_enable_t enable = USBOPT_ENABLE;
-    DEBUG("ReqSetup:0x%x\n", setup->request);
+
     switch(setup->request) {
         case USB_SETUP_REQ_GET_MAX_LUN:
             /* Stall as we don't support this feature */
@@ -267,10 +266,11 @@ static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
             msc->state = GEN_CSW;
         }
     }
-    
+
     if (msc->cmd.tag && msc->cmd.len == 0 && msc->state == GEN_CSW) {
-       // puts("Generate Command Status Wrapper");
+       DEBUG_PUTS("[MSC]: Generate CSW");
         scsi_gen_csw(handler, msc->cmd);
+        /* Command has been handled, so clear tag and state machine */
         msc->cmd.tag = 0;
         msc->state = WAITING;
     }
@@ -280,15 +280,14 @@ static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
                           usbus_event_usb_t event)
 {
     (void) usbus;
-    (void)handler;
+    (void) handler;
     switch(event) {
         case USBUS_EVENT_USB_RESET:
-          //  puts("EVENT RESET\n");
+            DEBUG_PUTS("EVENT RESET");
             break;
 
         default:
             DEBUG("Unhandled event :0x%x\n", event);
             break;
     }
-
 }

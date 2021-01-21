@@ -6,19 +6,32 @@
  * more details.
  */
 
-#ifndef USB_SCSI_H
-#define USB_SCSI_H
-
-#include "usb/msc.h"
+#ifndef USBUS_SCSI_H
+#define USBUS_SCSI_H
 
 #ifdef __cplusplus
 extern "c" {
 #endif
 
-#define USB_SETUP_REQ_GET_MAX_LUN       0xFE
-#define USB_SETUP_REQ_RESET             0xFF
+#ifndef USBUS_MSC_VENDOR_ID
+#define USBUS_MSC_VENDOR_ID "RIOT-OS"
+#endif /* USBUS_MSC_VENDOR_ID */
 
-/* SCSI Commands */
+#ifndef USBUS_MSC_PRODUCT_ID
+#define USBUS_MSC_PRODUCT_ID "RIOT_MSC_DISK"
+#endif /* USBUS_MSC_PRODUCT_ID */
+
+#ifndef USBUS_MSC_PRODUCT_REV
+#define USBUS_MSC_PRODUCT_REV " 1.0"
+#endif /* USBUS_MSC_PRODUCT_REV */
+
+/**
+ * @name USB SCSI Commands
+ *
+ * @see Table 9 - Packet Commands Supported by ATAPI Block Devices
+ * from INF-8070i draft published by SFF
+ * @{
+ */
 #define SCSI_TEST_UNIT_READY            0x00
 #define SCSI_REQUEST_SENSE              0x03
 #define SCSI_FORMAT_UNIT                0x04
@@ -30,20 +43,37 @@ extern "c" {
 #define SCSI_READ_FORMAT_CAPACITIES     0x23
 #define SCSI_READ_CAPACITY              0x25
 #define SCSI_READ10                     0x28
+#define SCCI_READ12                     0xA8
 #define SCSI_WRITE10                    0x2A
+#define SCSI_WRITE12                    0xAA
+#define SCSI_SEEK                       0x2B
+#define SCSI_WRITE_AND_VERIFY           0x2E
 #define SCSI_VERIFY10                   0x2F
 #define SCSI_MODE_SELECT10              0x55
 #define SCSI_MODE_SENSE10               0x5A
+/** @} */
 
+/**
+ * @brief Command Block Wrapper signature
+ */
 #define SCSI_CBW_SIGNATURE              0x43425355
+
+/**
+ * @brief Command Status Wrapper signature
+ */
 #define SCSI_CSW_SIGNATURE              0x53425355
+
 
 #define SCSI_INQUIRY_CONNECTED          0x00
 
+/**
+ * @name USB SCSI Version list
+ * @{
+ */
 #define SCSI_VERSION_NONE               0x0000
 #define SCSI_VERSION_SCSI1              0x0001
 #define SCSI_VERSION_SCSI2              0x0002
-
+/** @} */
 
 typedef struct __attribute__((packed)) {
     uint8_t type;
@@ -87,10 +117,30 @@ typedef struct __attribute__((packed)) {
     uint8_t  status;
 } msc_csw_buf_t;
 
-int mass_storage_init(usbus_t *usbus, usbus_msc_device_t *handler);
+typedef struct {
+    uint32_t tag;
+    size_t len;
+    uint8_t status;
+} cbw_info_t;
 
-int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len);
-int scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd);
+/**
+ * @brief Process incoming Command Block Wrapper buffer
+ *
+ * @param   usbus   USBUS thread to use
+ * @param   handler MSC device struct
+ * @param   ep      Endpoint pointer to read CBW from
+ * @param   len     Size of the received CBW buffer
+ */
+void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len);
+
+/**
+ * @brief Generate Command Status Wrapper and send it to the host
+ *
+ * @param   usbus   USBUS thread to use
+ * @param   cmd     struct containing needed informations to generate CBW response
+ */
+void scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Mesotic SAS
+ * Copyright (C) 2019-2021 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -23,6 +23,7 @@
 #include "usb/usbopt.h"
 
 #include "usb/msc.h"
+#include "usb/usbus/msc.h"
 #include "usb/usbus/msc/scsi.h"
 #include "board.h"
 #include "byteorder.h"
@@ -35,11 +36,6 @@ extern mtd_dev_t *mtd0;
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
-
-#define VENDOR_ID "RIOT-OS"
-#define PRODUCT_ID "RIOT_MSC_DISK"
-#define PRODUCT_REV " 1.0"
-
 
 static void _rx_ready(usbus_msc_device_t *msc)
 {
@@ -134,9 +130,9 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
     pkt.length = len - 4;
     pkt.tmp[0] = 0x80;
 
-    memcpy(&pkt.vendor_id, VENDOR_ID, sizeof(pkt.vendor_id));
-    memcpy(&pkt.product_id, PRODUCT_ID, sizeof(pkt.product_id));
-    memcpy(&pkt.product_rev, PRODUCT_REV, sizeof(pkt.product_rev));
+    memcpy(&pkt.vendor_id, USBUS_MSC_VENDOR_ID, sizeof(pkt.vendor_id));
+    memcpy(&pkt.product_id, USBUS_MSC_PRODUCT_ID, sizeof(pkt.product_id));
+    memcpy(&pkt.product_rev, USBUS_MSC_PRODUCT_REV, sizeof(pkt.product_rev));
 
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt, len);
@@ -192,7 +188,7 @@ void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
     msc->state = WAIT_FOR_TRANSFER;
 }
 
-int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len) {
+void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len) {
     (void)usbus;
     (void)len;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
@@ -204,7 +200,7 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
     if (cbw->signature != SCSI_CBW_SIGNATURE) {
         DEBUG("Invalid CBW signature:0x%lx, abort\n", cbw->signature);
         msc->cmd.status = -1;
-        return -1;
+        return;
     }
 
     /* Store command for CSW generation */
@@ -278,11 +274,9 @@ int scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, 
             DEBUG("Unhandled SCSI command:0x%x", cbw->cb[0]);
             msc->state=GEN_CSW;
     }
-
-    return 0;
 }
 
-int scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd) {
+void scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd) {
     msc_csw_buf_t csw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     memset(&csw, 0, sizeof(msc_csw_buf_t));
@@ -292,5 +286,4 @@ int scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd) {
     csw.status = cmd.status;
     memcpy(msc->ep_in->ep->buf, &csw, sizeof(msc_csw_buf_t));
     usbdev_ep_ready(msc->ep_in->ep, sizeof(msc_csw_buf_t));
-    return 0;
 }
