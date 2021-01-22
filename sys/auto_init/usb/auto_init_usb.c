@@ -42,7 +42,6 @@ static usbus_dfu_device_t dfu;
 
 #ifdef MODULE_USBUS_MSC
 #include "usb/usbus/msc.h"
-#include "usb/usbus/msc/scsi.h"
 usbus_msc_device_t msc;
 #endif
 

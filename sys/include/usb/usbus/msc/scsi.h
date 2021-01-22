@@ -1,9 +1,20 @@
 /*
- * Copyright (C) 2019 Mesotic SAS
+ * Copyright (C) 2019-2021 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser General
  * Public License v2.1. See the file LICENSE in the top level directory for
  * more details.
+ */
+
+/**
+ * @ingroup     usb_msc
+ *
+ * @{
+ *
+ * @file
+ * @brief       SCSI protocol definitions for USBUS
+ *
+ * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  */
 
 #ifndef USBUS_SCSI_H
@@ -75,6 +86,11 @@ extern "c" {
 #define SCSI_VERSION_SCSI2              0x0002
 /** @} */
 
+/**
+ * @brief Packet structure to answer (@ref SCSI_TEST_UNIT_READY) request
+ *
+ * @see PDF
+ */
 typedef struct __attribute__((packed)) {
     uint8_t type;
     uint8_t logical_unit;
@@ -82,6 +98,11 @@ typedef struct __attribute__((packed)) {
     uint8_t pad[6];
 } msc_test_unit_pkt_t;
 
+/**
+ * @brief Packet structure to answer (@ref SCSI_INQUIRY) request
+ *
+ * @see PDF
+ */
 typedef struct __attribute__((packed)) {
     uint8_t type;
     uint8_t removable;
@@ -93,30 +114,47 @@ typedef struct __attribute__((packed)) {
     uint8_t product_rev[4];
 } msc_inquiry_pkt_t;
 
+/**
+ * @brief Packet structure to answer (@ref SCSI_READ_CAPACITY) request
+ *
+ * @note Multiply the two values from this struct between them
+ * indicates the total size of your MTD device
+ *
+ * @see PDF
+ */
 typedef struct __attribute__((packed)) {
-    uint32_t last_blk;
-    uint32_t blk_len;
+    uint32_t last_blk;  /**< Indicate last block number */
+    uint32_t blk_len;   /**< Total size of a block in bytes */
 } msc_read_capa_pkt_t;
 
-/* Bulk-only Command Block Wrapper */
+/**
+ * @brief Command Block Wrapper packet structure
+ *
+ * @see PDF
+ */
 typedef struct __attribute__((packed)) {
-    uint32_t signature;
-    uint32_t tag;
-    uint32_t data_len;
-    uint8_t  flags;
-    uint8_t  lun;
-    uint8_t  cb_len;
-    uint8_t  cb[16];
+    uint32_t signature; /**< CBW signature (@ref SCSI_CBW_SIGNATURE) */
+    uint32_t tag;       /**< ID for the current command */
+    uint32_t data_len;  /**< TODO: */
+    uint8_t  flags;     /**< TODO: */
+    uint8_t  lun;       /**< Target Logical Unit Number */
+    uint8_t  cb_len;    /**< Length of the block in bytes (max: 16 bytes) */
+    uint8_t  cb[16];    /**< Command block buffer */
 } msc_cbw_buf_t;
 
-/* Bulk-only Command Status Wrapper */
+/**
+ * @brief Command Status Wrapper packet structure
+ *
+ * @see PDF
+ */
 typedef struct __attribute__((packed)) {
-    uint32_t signature;
-    uint32_t tag;
-    uint32_t data_left;
-    uint8_t  status;
+    uint32_t signature; /**< CSW signature (@ref SCSI_CSW_SIGNATURE) */
+    uint32_t tag;       /**< ID for the answered CBW */
+    uint32_t data_left; /**< Indicate how many bytes from the CBW were not processed */
+    uint8_t  status;    /**< Status of the command */
 } msc_csw_buf_t;
 
+/* TODO: check if we can do without this */
 typedef struct {
     uint32_t tag;
     size_t len;

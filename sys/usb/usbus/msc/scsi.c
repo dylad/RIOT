@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup usb_scsi Mass storage
+ * @ingroup usb_msc SCSI protocol implementation for USB MSC
  * @{
  * @file
  *
@@ -15,13 +15,7 @@
  * @}
  */
 
-#include "thread.h"
-#include "msg.h"
-#include "mutex.h"
 #include "usb/usbus.h"
-#include "usb/descriptor.h"
-#include "usb/usbopt.h"
-
 #include "usb/msc.h"
 #include "usb/usbus/msc.h"
 #include "usb/usbus/msc/scsi.h"
@@ -42,29 +36,28 @@ static void _rx_ready(usbus_msc_device_t *msc)
     usbus_event_post(msc->usbus, &msc->rx_event);
 }
 
-void _scsi_test_unit_ready(usbus_handler_t *handler, usbdev_ep_t *ep,
-                           msc_cbw_buf_t *cbw) {
-
+void _scsi_test_unit_ready(usbus_handler_t *handler,  msc_cbw_buf_t *cbw)
+{
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    (void)ep;
 
     if (cbw->data_len != 0) {
         static const usbopt_enable_t enable = USBOPT_ENABLE;
 
         if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
-            usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
+            usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable,
+                          sizeof(usbopt_enable_t));
         }
         else {
-            usbdev_ep_set(msc->ep_out->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
+            usbdev_ep_set(msc->ep_out->ep, USBOPT_EP_STALL, &enable,
+                          sizeof(usbopt_enable_t));
         }
     }
     msc->state = GEN_CSW;
 }
-void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
-    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
 
-    /* A block is 512 bytes
-      offset are counted as block */
+void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
+{
+    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
 
     /* Get first block number to read from */
     msc->block = (cbw->cb[2] << 24) |
@@ -79,22 +72,17 @@ void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
     /* FIXME: find a better way to manage this */
     msc->cmd.len = cbw->data_len;
     msc->state = DATA_TRANSFER;
-
-    return;
 }
 
-void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw) {
+void _scsi_read10(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
+{
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-
-    (void) ep;
-    /* A block is 512 bytes
-      offset are counted as block */
 
     /* Get first block number to read from */
     msc->block = (cbw->cb[2] << 24) |
-             (cbw->cb[3] << 16) |
-             (cbw->cb[4] <<  8) |
-             (cbw->cb[5] <<  0);
+                 (cbw->cb[3] << 16) |
+                 (cbw->cb[4] <<  8) |
+                 (cbw->cb[5] <<  0);
 
     /* Get number of blocks to transfer */
     msc->block_nb = (cbw->cb[7] <<  8) |
@@ -107,16 +95,10 @@ void _scsi_read10(usbus_handler_t *handler, usbdev_ep_t *ep, msc_cbw_buf_t *cbw)
     if ((cbw->flags & USB_MSC_CBW_FLAG_IN) != 0) {
             _rx_ready(msc);
     }
-    else {
-        DEBUG_PUTS("READ BAD");
-    }
-
-    return;
 }
 
-void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
-
-    (void)ep;
+void _scsi_inquiry(usbus_handler_t *handler)
+{
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     msc_inquiry_pkt_t pkt;
     size_t len = sizeof(msc_inquiry_pkt_t);
@@ -141,7 +123,8 @@ void _scsi_inquiry(usbus_handler_t *handler, usbdev_ep_t *ep) {
     return;
 }
 
-void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw) {
+void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw)
+{
     (void)cbw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     msc_read_capa_pkt_t pkt;
@@ -155,7 +138,8 @@ void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw) {
     msc->state = WAIT_FOR_TRANSFER;
 }
 
-void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
+void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
+{
     (void)cbw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     uint8_t pkt[4];
@@ -169,8 +153,8 @@ void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw) {
     msc->state = WAIT_FOR_TRANSFER;
 }
 
-void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
-    (void)ep;
+void _scsi_request_sense(usbus_handler_t *handler)
+{
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     uint8_t pkt[18];
     size_t len = 18;
@@ -188,10 +172,15 @@ void _scsi_request_sense(usbus_handler_t *handler, usbdev_ep_t *ep) {
     msc->state = WAIT_FOR_TRANSFER;
 }
 
-void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep, size_t len) {
+void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler,
+                      usbdev_ep_t *ep, size_t len)
+{
     (void)usbus;
     (void)len;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+
+    /*TODO: Ensure this is a CBW packet by checking against the currently
+            unused len arg */
 
     /* store data into specific struct */
     msc_cbw_buf_t *cbw = (msc_cbw_buf_t*) ep->buf;
@@ -211,19 +200,19 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep,
     switch(cbw->cb[0]) {
         case SCSI_TEST_UNIT_READY:
             DEBUG_PUTS("SCSI_TEST_UNIT_READY");
-            _scsi_test_unit_ready(handler, ep, cbw);
+            _scsi_test_unit_ready(handler, cbw);
             break;
         case SCSI_REQUEST_SENSE:
             DEBUG_PUTS("SCSI_REQUEST_SENSE");
-            _scsi_request_sense(handler, ep);
+            _scsi_request_sense(handler);
             break;
         case SCSI_FORMAT_UNIT:
             DEBUG_PUTS("TODO: SCSI_FORMAT_UNIT");
             msc->state=GEN_CSW;
             break;
         case SCSI_INQUIRY:
-            //puts("SCSI_INQUIRY");
-            _scsi_inquiry(handler, ep);
+            DEBUG_PUTS("SCSI_INQUIRY");
+            _scsi_inquiry(handler);
             break;
         case SCSI_START_STOP_UNIT:
             DEBUG_PUTS("TODO: SCSI_START_STOP_UNIT");
@@ -260,7 +249,7 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep,
             break;
         case SCSI_READ10:
             DEBUG_PUTS("SCSI_READ10");
-            _scsi_read10(handler, ep, cbw);
+            _scsi_read10(handler, cbw);
             break;
         case SCSI_WRITE10:
             DEBUG_PUTS("SCSI_WRITE10");
@@ -276,7 +265,8 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep,
     }
 }
 
-void scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd) {
+void scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd)
+{
     msc_csw_buf_t csw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     memset(&csw, 0, sizeof(msc_csw_buf_t));

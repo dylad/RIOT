@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Mesotic SAS
+ * Copyright (C) 2019-2021 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup usb_msc Mass storage
+ * @ingroup usb_msc Mass Storage Class implementation
  * @{
  * @file
  *
@@ -15,9 +15,6 @@
  * @}
  */
 
-#include "thread.h"
-#include "msg.h"
-#include "mutex.h"
 #include "usb/descriptor.h"
 #include "usb/usbus.h"
 #include "usb/usbus/control.h"
@@ -37,14 +34,23 @@
 #include "mtd_sdcard.h"
 extern mtd_dev_t *mtd0;
 
+/* Internal buffer to handle size difference between MTD layer and USB
+   endpoint size as some MTD implementation (like mtd_sdcard) doesn't allow
+   endpoint size transfer */
 static unsigned char buff[512];
 
+
+/* Internal handler definitions */
 static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
-                          usbus_event_usb_t event);
+                           usbus_event_usb_t event);
+
 static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
-                          usbus_control_request_state_t state, usb_setup_t *setup);
+                            usbus_control_request_state_t state,
+                            usb_setup_t *setup);
+
 static void _transfer_handler(usbus_t *usbus, usbus_handler_t *handler,
                               usbdev_ep_t *ep, usbus_event_transfer_t event);
+
 static void _init(usbus_t *usbus, usbus_handler_t *handler);
 
 static const usbus_handler_driver_t msc_driver = {
@@ -79,7 +85,6 @@ static void _write_xfer(usbus_msc_device_t *msc) {
 /* Check if we have a block to read and transfer */
     if (msc->block_nb) {
         size_t len;
-       // printf("write xfer:%d\n",msc->cmd.len);
         /* Retrieve incoming data */
         usbdev_ep_get(msc->ep_out->ep, USBOPT_EP_AVAILABLE, &len, sizeof(size_t));
         if (len > 0) {
@@ -101,7 +106,6 @@ static void _write_xfer(usbus_msc_device_t *msc) {
         if (msc->cmd.len == 0) {
             /* All blocks have been transferred, send CSW to host */
             if (msc->state == DATA_TRANSFER) {
-                //puts("wr ended");
                 msc->state = GEN_CSW;
             }
         }
@@ -109,7 +113,6 @@ static void _write_xfer(usbus_msc_device_t *msc) {
 }
 static void _xfer_data( usbus_msc_device_t *msc)
 {
-    //DEBUG_PUTS("MSC: XMIT EVENT");
     /* Check if we have a block to read and transfer */
     if (msc->block_nb) {
         /* read buffer from mtd device */
@@ -130,7 +133,6 @@ static void _xfer_data( usbus_msc_device_t *msc)
             msc->block++;
             msc->block_nb--;
         }
-
     }
     else {
         /* All blocks have been transferred, send CSW to host */
@@ -142,10 +144,8 @@ static void _xfer_data( usbus_msc_device_t *msc)
 
 static void _handle_rx_event(event_t *ev)
 {
-
-    usbus_msc_device_t *msc = container_of(ev, usbus_msc_device_t,
-                                                 rx_event);
-       _xfer_data(msc);
+    usbus_msc_device_t *msc = container_of(ev, usbus_msc_device_t, rx_event);
+    _xfer_data(msc);
 }
 
 int usbus_msc_init(usbus_t *usbus, usbus_msc_device_t *handler)
@@ -190,10 +190,12 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
     msc->iface.handler = handler;
 
     /* Create required endpoints */
-    msc->ep_in = usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK, USB_EP_DIR_IN, 64);
-    msc->ep_in->interval = 20;
-    msc->ep_out = usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK, USB_EP_DIR_OUT, 64);
-    msc->ep_out->interval = 20;
+    msc->ep_in = usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK,
+                                    USB_EP_DIR_IN, 64);
+    msc->ep_in->interval = 0;
+    msc->ep_out = usbus_add_endpoint(usbus, &msc->iface, USB_EP_TYPE_BULK,
+                                     USB_EP_DIR_OUT, 64);
+    msc->ep_out->interval = 0;
 
     /* Add interfaces to the stack */
     usbus_add_interface(usbus, &msc->iface);
@@ -208,7 +210,8 @@ static void _init(usbus_t *usbus, usbus_handler_t *handler)
 }
 
 static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
-                          usbus_control_request_state_t state, usb_setup_t *setup)
+                            usbus_control_request_state_t state,
+                            usb_setup_t *setup)
 {
     (void)usbus;
     (void)state;
@@ -219,7 +222,8 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     switch(setup->request) {
         case USB_SETUP_REQ_GET_MAX_LUN:
             /* Stall as we don't support this feature */
-            usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable, sizeof(usbopt_enable_t));
+            usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable,
+                          sizeof(usbopt_enable_t));
             break;
         case USB_SETUP_REQ_RESET:
             DEBUG("TODO: implement reset setup request\n");

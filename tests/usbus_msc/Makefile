@@ -1,9 +1,6 @@
 
-BOARD ?= samr21-xpro
+BOARD ?= same54-xpro
 include ../Makefile.tests_common
-
- # If no BOARD is found in the environment, use this default:
-BOARD ?= samr21-xpro
 
  # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
@@ -13,7 +10,6 @@ RIOTBASE ?= $(CURDIR)/../..
 # development process:
 DEVELHELP ?= 1
 
-USEMODULE += core_thread_flags
 USEMODULE += auto_init_usbus
 USEMODULE += usbus_msc
 USEMODULE += shell
