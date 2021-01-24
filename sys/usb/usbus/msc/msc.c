@@ -29,15 +29,13 @@
 #define ENABLE_DEBUG    0
 #include "debug.h"
 
-
-/* SD-CARD specific */
-#include "mtd_sdcard.h"
+#include "mtd.h"
 extern mtd_dev_t *mtd0;
 
 /* Internal buffer to handle size difference between MTD layer and USB
    endpoint size as some MTD implementation (like mtd_sdcard) doesn't allow
    endpoint size transfer */
-static unsigned char buff[512];
+static unsigned char buff[USBUS_MSC_BUFFER_SIZE];
 
 
 /* Internal handler definitions */
@@ -97,8 +95,8 @@ static void _write_xfer(usbus_msc_device_t *msc) {
         /* Decrement whole len */
         msc->cmd.len -= len;
         /* buffer is full, write it and point to new block if any */
-        if (msc->block_offset >= 512) {
-            mtd_write_page(mtd0, msc->buffer, msc->block, 0, 512);
+        if (msc->block_offset >= mtd0->page_size) {
+            mtd_write_page(mtd0, msc->buffer, msc->block, 0, mtd0->page_size);
             msc->block_offset = 0;
             msc->block++;
             msc->block_nb--;
@@ -117,7 +115,7 @@ static void _xfer_data( usbus_msc_device_t *msc)
     if (msc->block_nb) {
         /* read buffer from mtd device */
         if (msc->block_offset == 0) {
-            mtd_read_page(mtd0, msc->buffer, msc->block,0, 512);
+            mtd_read_page(mtd0, msc->buffer, msc->block,0, mtd0->page_size);
         }
         /* Prepare endpoint buffer */
         memcpy(msc->ep_in->ep->buf, &msc->buffer[msc->block_offset], 64);
@@ -128,7 +126,7 @@ static void _xfer_data( usbus_msc_device_t *msc)
         /* Decrement whole len */
         msc->cmd.len -= 64;
         /* whole buffer is empty, point to new block if any */
-        if (msc->block_offset >= 512) {
+        if (msc->block_offset >= mtd0->page_size) {
             msc->block_offset = 0;
             msc->block++;
             msc->block_nb--;

@@ -24,10 +24,6 @@
 
 #include <string.h>
 
-/* SD-CARD specific */
-#include "mtd_sdcard.h"
-extern mtd_dev_t *mtd0;
-
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
@@ -129,7 +125,7 @@ void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw)
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     msc_read_capa_pkt_t pkt;
     size_t len = sizeof(msc_read_capa_pkt_t);
-    pkt.blk_len = byteorder_swapl(SD_HC_BLOCK_SIZE);
+    pkt.blk_len = byteorder_swapl(mtd0->page_size);
     pkt.last_blk = byteorder_swapl(15415296);
 
     /* copy into ep buffer */
