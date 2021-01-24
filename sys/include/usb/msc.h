@@ -54,19 +54,42 @@ extern "c" {
  * from Universal Serial Bus Mass Storage Class Specification Overview 1.4
  * @{
  */
-#define USB_MSC_PROTOCOL_CBI_CCI      0x00 /**< CBI transport with command completion interrupt*/
-#define USB_MSC_PROTOCOL_CBI_NO_CCI   0x01 /**< CBI transport without command completion interrupt */
-#define USB_MSC_PROTOCOL_BBB          0x50 /**< Bulk only (BBB) transport */
-#define USB_MSC_PROTOCOL_UAS          0x62 /**< UAS allocated by USB-IF */
-#define USB_MSC_PROTOCOL_VENDOR       0xFF /**< Vendor Specific */
+#define USB_MSC_PROTOCOL_CBI_CCI      0x00  /**< CBI transport with command completion interrupt*/
+#define USB_MSC_PROTOCOL_CBI_NO_CCI   0x01  /**< CBI transport without command completion interrupt */
+#define USB_MSC_PROTOCOL_BBB          0x50  /**< Bulk only (BBB) transport */
+#define USB_MSC_PROTOCOL_UAS          0x62  /**< UAS allocated by USB-IF */
+#define USB_MSC_PROTOCOL_VENDOR       0xFF  /**< Vendor Specific */
 /** @} */
 
-#define USB_TYPE_DESCRIPTOR_MSC         0x24 /**< Mass Storage Class descriptor */
+/**
+ * @brief   Mass Storage Class descriptor
+ *
+ * @see     Table 4 — Mass Storage Class Specific Descriptors
+ * from Universal Serial Bus Mass Storage Class Specification Overview 1.4
+ */
+#define USB_TYPE_DESCRIPTOR_MSC         0x24
 
-#define USB_MSC_CBW_FLAG_IN             0x80
+/**
+ * @brief   Command Block Wrapper flags
+ *
+ * @see     Chap 5.1 — Command Block Wrapper (CBW)
+ * from Universal Serial Bus Mass Storage Class Bulk-Only Transport
+ */
+#define USB_MSC_CBW_FLAG_IN             0x80    /**< Indicate Device to Host direction */
 
-#define USB_SETUP_REQ_GET_MAX_LUN       0xFE
-#define USB_SETUP_REQ_RESET             0xFF
+/**
+ * @name USB Mass Storage Class request codes
+ *
+ * @see Table 3 — Mass Storage Request Codes
+ * from Universal Serial Bus Mass Storage Class Specification Overview 1.4
+ * @{
+ */
+#define USB_MSC_SETUP_REQ_ADSC      0x01     /**< Accept Device-Specific Command request */
+#define USB_MSC_SETUP_REQ_GET_REQ   0xFC     /**< Get Request */
+#define USB_MSC_SETUP_REQ_PUT_REQ   0xFD     /**< Put Request */
+#define USB_MSC_SETUP_REQ_GML       0xFE     /**< Get Max LUN request */
+#define USB_MSC_SETUP_REQ_BOMSR     0xFF     /**< Bulk-Only Mass Storage Reset request */
+/** @} */
 
 typedef struct __attribute__((packed)) {
     uint8_t length;

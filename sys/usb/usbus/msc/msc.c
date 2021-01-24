@@ -218,12 +218,12 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     static usbopt_enable_t enable = USBOPT_ENABLE;
 
     switch(setup->request) {
-        case USB_SETUP_REQ_GET_MAX_LUN:
+        case USB_MSC_SETUP_REQ_GML:
             /* Stall as we don't support this feature */
             usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable,
                           sizeof(usbopt_enable_t));
             break;
-        case USB_SETUP_REQ_RESET:
+        case USB_MSC_SETUP_REQ_BOMSR:
             DEBUG("TODO: implement reset setup request\n");
             break;
         default:
