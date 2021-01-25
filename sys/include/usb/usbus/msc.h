@@ -9,8 +9,7 @@
  */
 
 /**
- * @defgroup    usbus_msc USBUS Mass Storage Class functions
- * @ingroup     usb
+ * @ingroup     usbus_msc
  *
  * @{
  *
@@ -20,8 +19,8 @@
  * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  */
 
-#ifndef USBUS_MSC_H
-#define USBUS_MSC_H
+#ifndef USB_USBUS_MSC_H
+#define USB_USBUS_MSC_H
 
 #include <stdint.h>
 #include "usb/usbus.h"
@@ -77,5 +76,5 @@ int usbus_msc_init(usbus_t *usbus, usbus_msc_device_t *handler);
 }
 #endif
 
-#endif /* USBUS_MSC_H */
+#endif /* USB_USBUS_MSC_H */
 /** @} */

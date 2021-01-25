@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     usb_msc
+ * @ingroup     usbus_msc
  *
  * @{
  *
@@ -17,8 +17,8 @@
  * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  */
 
-#ifndef USBUS_SCSI_H
-#define USBUS_SCSI_H
+#ifndef USB_USBUS_MSC_SCSI_H
+#define USB_USBUS_MSC_SCSI_H
 
 #ifdef __cplusplus
 extern "c" {
@@ -43,7 +43,7 @@ extern "c" {
  * from INF-8070i draft published by SFF
  * @{
  */
-#define SCSI_TEST_UNIT_READY            0x00
+#define SCSI_TEST_UNIT_READY            0x00    /**< SCSI Test Unit Ready */
 #define SCSI_REQUEST_SENSE              0x03
 #define SCSI_FORMAT_UNIT                0x04
 #define SCSI_INQUIRY                    0x12
@@ -183,5 +183,5 @@ void scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd);
 }
 #endif
 
-#endif /* USB_SCSI_H */
+#endif /* USB_USBUS_MSC_SCSI_H */
 /** @} */

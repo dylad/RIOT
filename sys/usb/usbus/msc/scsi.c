@@ -193,7 +193,7 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler,
     msc->cmd.status = 0;
     msc->cmd.len = 0;
 
-    switch(cbw->cb[0]) {
+    switch (cbw->cb[0]) {
         case SCSI_TEST_UNIT_READY:
             DEBUG_PUTS("SCSI_TEST_UNIT_READY");
             _scsi_test_unit_ready(handler, cbw);
