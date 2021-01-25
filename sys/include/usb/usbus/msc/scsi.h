@@ -44,24 +44,24 @@ extern "c" {
  * @{
  */
 #define SCSI_TEST_UNIT_READY            0x00    /**< SCSI Test Unit Ready */
-#define SCSI_REQUEST_SENSE              0x03
-#define SCSI_FORMAT_UNIT                0x04
-#define SCSI_INQUIRY                    0x12
-#define SCSI_MODE_SELECT6               0x15
-#define SCSI_MODE_SENSE6                0x1A
-#define SCSI_START_STOP_UNIT            0x1B
-#define SCSI_MEDIA_REMOVAL              0x1E
-#define SCSI_READ_FORMAT_CAPACITIES     0x23
-#define SCSI_READ_CAPACITY              0x25
-#define SCSI_READ10                     0x28
-#define SCCI_READ12                     0xA8
-#define SCSI_WRITE10                    0x2A
-#define SCSI_WRITE12                    0xAA
-#define SCSI_SEEK                       0x2B
-#define SCSI_WRITE_AND_VERIFY           0x2E
-#define SCSI_VERIFY10                   0x2F
-#define SCSI_MODE_SELECT10              0x55
-#define SCSI_MODE_SENSE10               0x5A
+#define SCSI_REQUEST_SENSE              0x03    /**< SCSI Request Sense */
+#define SCSI_FORMAT_UNIT                0x04    /**< SCSI Format Unit */
+#define SCSI_INQUIRY                    0x12    /**< SCSI Inquiry */
+#define SCSI_MODE_SELECT6               0x15    /**< SCSI Mode Select6 */
+#define SCSI_MODE_SENSE6                0x1A    /**< SCSI Mode Sense6 */
+#define SCSI_START_STOP_UNIT            0x1B    /**< SCSI Start Stop Unit */
+#define SCSI_MEDIA_REMOVAL              0x1E    /**< SCSI Media Removal */
+#define SCSI_READ_FORMAT_CAPACITIES     0x23    /**< SCSI Read Format Capacities */
+#define SCSI_READ_CAPACITY              0x25    /**< SCSI Read Capacity */ 
+#define SCSI_READ10                     0x28    /**< SCSI Read10 */
+#define SCCI_READ12                     0xA8    /**< SCSI Read12 */
+#define SCSI_WRITE10                    0x2A    /**< SCSI Write10 */
+#define SCSI_WRITE12                    0xAA    /**< SCSI Write12 */
+#define SCSI_SEEK                       0x2B    /**< SCSI Seek */
+#define SCSI_WRITE_AND_VERIFY           0x2E    /**< SCSI Write and Verify */
+#define SCSI_VERIFY10                   0x2F    /**< SCSI Verify10 */
+#define SCSI_MODE_SELECT10              0x55    /**< SCSI Mode Select10 */
+#define SCSI_MODE_SENSE10               0x5A    /**< SCSI Mode Sense10 */
 /** @} */
 
 /**
@@ -130,13 +130,14 @@ typedef struct __attribute__((packed)) {
 /**
  * @brief Command Block Wrapper packet structure
  *
- * @see PDF
+ * @see Table 5.1 Command Block Wrapper (CBW)
+ * from Universal Serial Bus Mass Storage Class Bulk-Only Transport
  */
 typedef struct __attribute__((packed)) {
     uint32_t signature; /**< CBW signature (@ref SCSI_CBW_SIGNATURE) */
     uint32_t tag;       /**< ID for the current command */
-    uint32_t data_len;  /**< TODO: */
-    uint8_t  flags;     /**< TODO: */
+    uint32_t data_len;  /**< Number of bytes host expects to transfer from/to */
+    uint8_t  flags;     /**< Command block flags */
     uint8_t  lun;       /**< Target Logical Unit Number */
     uint8_t  cb_len;    /**< Length of the block in bytes (max: 16 bytes) */
     uint8_t  cb[16];    /**< Command block buffer */
@@ -145,7 +146,8 @@ typedef struct __attribute__((packed)) {
 /**
  * @brief Command Status Wrapper packet structure
  *
- * @see PDF
+ * @see Table 5.2 - Command Status Wrapper
+ * from Universal Serial Bus Mass Storage Class Bulk-Only Transport
  */
 typedef struct __attribute__((packed)) {
     uint32_t signature; /**< CSW signature (@ref SCSI_CSW_SIGNATURE) */
