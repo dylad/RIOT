@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup usb_msc SCSI protocol implementation for USB MSC
+ * @ingroup usbus_msc SCSI protocol implementation for USB MSC
  * @{
  * @file
  *
@@ -24,7 +24,7 @@
 
 #include <string.h>
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG 0
 #include "debug.h"
 
 static void _rx_ready(usbus_msc_device_t *msc)

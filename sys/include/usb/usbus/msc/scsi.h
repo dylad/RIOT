@@ -52,7 +52,7 @@ extern "c" {
 #define SCSI_START_STOP_UNIT            0x1B    /**< SCSI Start Stop Unit */
 #define SCSI_MEDIA_REMOVAL              0x1E    /**< SCSI Media Removal */
 #define SCSI_READ_FORMAT_CAPACITIES     0x23    /**< SCSI Read Format Capacities */
-#define SCSI_READ_CAPACITY              0x25    /**< SCSI Read Capacity */ 
+#define SCSI_READ_CAPACITY              0x25    /**< SCSI Read Capacity */
 #define SCSI_READ10                     0x28    /**< SCSI Read10 */
 #define SCCI_READ12                     0xA8    /**< SCSI Read12 */
 #define SCSI_WRITE10                    0x2A    /**< SCSI Write10 */

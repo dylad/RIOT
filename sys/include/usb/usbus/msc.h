@@ -46,7 +46,10 @@ typedef enum {
     GEN_CSW
 } usbus_msc_state_t;
 
-struct usbus_msc_device {
+/**
+ * @brief USBUS MSC device interface context
+ */
+typedef struct usbus_msc_device {
     usbus_handler_t handler_ctrl;   /**< Control interface handler */
     usbus_interface_t iface;        /**< MSC interface */
     usbus_endpoint_t *ep_in;        /**< Data endpoint in */
@@ -60,8 +63,7 @@ struct usbus_msc_device {
     uint32_t block;                 /**< First block to transfer data from/to */
     uint16_t block_nb;              /**< Number of block to transfer for READ and WRITE operations */
     uint16_t block_offset;          /**< Internal offset for endpoint size chunk transfer */
-};
-typedef struct usbus_msc_device usbus_msc_device_t;
+} usbus_msc_device_t;
 
 /**
  * @brief MSC initialization function
