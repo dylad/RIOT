@@ -6,6 +6,14 @@
  * directory for more details.
  */
 
+/**
+ * @ingroup usb_msc Mass Storage Class implementation
+ * @{
+ *
+ * @author  Dylan Laduranty <dylan.laduranty@mesotic.com>
+ * @}
+ */
+
 #include "usb/descriptor.h"
 #include "usb/usbus.h"
 #include "usb/usbus/control.h"
@@ -87,14 +95,13 @@ static void _write_xfer(usbus_msc_device_t *msc) {
         }
     }
 }
-
 static void _xfer_data( usbus_msc_device_t *msc)
 {
     /* Check if we have a block to read and transfer */
     if (msc->block_nb) {
         /* read buffer from mtd device */
         if (msc->block_offset == 0) {
-            mtd_read_page(mtd0, msc->buffer, msc->block, 0, mtd0->page_size);
+            mtd_read_page(mtd0, msc->buffer, msc->block,0, mtd0->page_size);
         }
         /* Prepare endpoint buffer */
         memcpy(msc->ep_in->ep->buf, &msc->buffer[msc->block_offset], 64);
@@ -196,7 +203,7 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     static usbopt_enable_t enable = USBOPT_ENABLE;
 
-    switch (setup->request) {
+    switch(setup->request) {
         case USB_MSC_SETUP_REQ_GML:
             /* Stall as we don't support this feature */
             usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable,
@@ -262,7 +269,7 @@ static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
 {
     (void) usbus;
     (void) handler;
-    switch (event) {
+    switch(event) {
         case USBUS_EVENT_USB_RESET:
             DEBUG_PUTS("EVENT RESET");
             break;

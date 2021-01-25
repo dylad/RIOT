@@ -9,7 +9,6 @@
 /**
  * @ingroup usbus_msc SCSI protocol implementation for USB MSC
  * @{
- * @file
  *
  * @author  Dylan Laduranty <dylan.laduranty@mesotic.com>
  * @}
