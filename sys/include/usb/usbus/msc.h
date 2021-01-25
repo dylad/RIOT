@@ -62,7 +62,6 @@ struct usbus_msc_device {
     uint16_t block_nb;              /**< Number of block to transfer for READ and WRITE operations */
     uint16_t block_offset;          /**< Internal offset for endpoint size chunk transfer */
 };
-
 typedef struct usbus_msc_device usbus_msc_device_t;
 
 /**

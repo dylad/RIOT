@@ -62,14 +62,6 @@ extern "c" {
 /** @} */
 
 /**
- * @brief   Mass Storage Class descriptor
- *
- * @see     Table 4 — Mass Storage Class Specific Descriptors
- * from Universal Serial Bus Mass Storage Class Specification Overview 1.4
- */
-#define USB_TYPE_DESCRIPTOR_MSC         0x24
-
-/**
  * @brief   Command Block Wrapper flags
  *
  * @see     Chap 5.1 — Command Block Wrapper (CBW)
@@ -91,11 +83,17 @@ extern "c" {
 #define USB_MSC_SETUP_REQ_BOMSR     0xFF     /**< Bulk-Only Mass Storage Reset request */
 /** @} */
 
-typedef struct __attribute__((packed)) {
-    uint8_t length;
-    uint8_t type;
-    uint8_t subtype;
-} usb_desc_msc_t;
+/**
+ * @name USB Mass Storage Class CSW status code
+ *
+ * @see Table 5.3 — Command Block Status Values
+ * from Universal Serial Bus Mass Storage Class Bulk-Only Transport
+ * @{
+ */
+#define USB_MSC_CSW_STATUS_COMMAND_PASSED       0x00     /**< CSW Status command successful */
+#define USB_MSC_CSW_STATUS_COMMAND_FAILED       0x01     /**< CSW Status command failure */
+#define USB_MSC_CSW_STATUS_COMMAND_PHASE_ERROR  0x02     /**< CSW Status command phase error */
+/** @} */
 
 #ifdef __cplusplus
 }

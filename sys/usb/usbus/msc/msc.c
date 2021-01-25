@@ -58,23 +58,11 @@ static const usbus_handler_driver_t msc_driver = {
     .transfer_handler = _transfer_handler,
 };
 
-static size_t _gen_msc_descriptor(usbus_t *usbus, void *arg)
-{
-    (void)arg;
-    usb_desc_msc_t msc;
-    /* functional msc descriptor */
-    msc.length = sizeof(usb_desc_msc_t);
-    msc.type = USB_TYPE_DESCRIPTOR_MSC;
-    msc.subtype = 0x00;
-    usbus_control_slicer_put_bytes(usbus, (uint8_t*)&msc, sizeof(msc));
-    return sizeof(usb_desc_msc_t);
-}
-
  static const usbus_descr_gen_funcs_t _msc_descriptor = {
-    .fmt_post_descriptor = _gen_msc_descriptor,
+    .fmt_post_descriptor = NULL,
     .fmt_pre_descriptor = NULL,
     .len = {
-        .fixed_len =  sizeof(usb_desc_msc_t),
+        .fixed_len =  0,
     },
     .len_type = USBUS_DESCR_LEN_FIXED,
 };
