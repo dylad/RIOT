@@ -100,12 +100,12 @@ void _scsi_inquiry(usbus_handler_t *handler)
     memset(&pkt, 0, len);
     /* prepare pkt response */
     pkt.type = SCSI_INQUIRY_CONNECTED;
-    pkt.removable = 0x80;
+    pkt.removable = 1;
     /* bit flipping */
     //pkt.version = SCSI_VERSION_SCSI1;
-    pkt.version = 0x0001;
+    pkt.version = 0x01;
     pkt.length = len - 4;
-    pkt.tmp[0] = 0x80;
+    pkt.unused[0] = 0x80;
 
     memcpy(&pkt.vendor_id, USBUS_MSC_VENDOR_ID, sizeof(pkt.vendor_id));
     memcpy(&pkt.product_id, USBUS_MSC_PRODUCT_ID, sizeof(pkt.product_id));

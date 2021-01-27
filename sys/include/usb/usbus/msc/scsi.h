@@ -101,17 +101,23 @@ typedef struct __attribute__((packed)) {
 /**
  * @brief Packet structure to answer (@ref SCSI_INQUIRY) request
  *
- * @see PDF
+ * @see Inquiry Command from SCSI Primary Command
+ *
+ * @note Vendor specific information (Byte 36 and above) and flags from bytes
+ *       5 to 7 are currently unsupported
  */
 typedef struct __attribute__((packed)) {
-    uint8_t type;
-    uint8_t removable;
-    uint16_t version;
-    uint8_t length;
-    uint8_t tmp[3];
-    uint8_t vendor_id[8];
-    uint8_t product_id[16];
-    uint8_t product_rev[4];
+    uint8_t type;               /**< Byte 0 Peripheral type */
+    uint8_t reserved1:7;        /**< Byte 1 [B6..B0] Reserved */
+    uint8_t removable:1;        /**< Byte 1 [B7] Removable device flag */
+    uint8_t version;            /**< Byte 2 SCSI Version */
+    uint8_t response_format:4;  /**< Byte 3 [B3..B0] Response Data Format */
+    uint8_t reserved3:4;        /**< Byte 3 [B7..B4] Reserved */
+    uint8_t length;             /**< Byte 4 Additionnal Length (n-4) */
+    uint8_t unused[3];          /**< Byte 7..5 Miscellanous flags UNUSED BY USBUS ONLY */
+    uint8_t vendor_id[8];       /**< Byte 15..8 Vendor Identification */
+    uint8_t product_id[16];     /**< Byte 31..16 Product Identification */
+    uint8_t product_rev[4];     /**< Byte 35..32 Product Revision */
 } msc_inquiry_pkt_t;
 
 /**
