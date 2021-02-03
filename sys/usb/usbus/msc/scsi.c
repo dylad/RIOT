@@ -10,6 +10,9 @@
  * @ingroup usbus_msc SCSI protocol implementation for USB MSC
  * @{
  *
+ * @note    Keep in mind that SCSI is a big endian protocol and
+ *          USB transfer data as little endian    
+ *
  * @author  Dylan Laduranty <dylan.laduranty@mesotic.com>
  * @}
  */
@@ -56,9 +59,9 @@ void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
 
     /* Get first block number to read from */
     msc->block = (cbw->cb[2] << 24) |
-             (cbw->cb[3] << 16) |
-             (cbw->cb[4] <<  8) |
-             (cbw->cb[5] <<  0);
+                 (cbw->cb[3] << 16) |
+                 (cbw->cb[4] <<  8) |
+                 (cbw->cb[5] <<  0);
 
     /* Get number of blocks to transfer */
     msc->block_nb = (cbw->cb[7] <<  8) |
@@ -101,8 +104,6 @@ void _scsi_inquiry(usbus_handler_t *handler)
     /* prepare pkt response */
     pkt.type = SCSI_INQUIRY_CONNECTED;
     pkt.removable = 1;
-    /* bit flipping */
-    //pkt.version = SCSI_VERSION_SCSI1;
     pkt.version = 0x01;
     pkt.length = len - 4;
     pkt.unused[0] = 0x80;
@@ -118,15 +119,16 @@ void _scsi_inquiry(usbus_handler_t *handler)
     return;
 }
 
-void _scsi_read_capacity(usbus_handler_t *handler,  msc_cbw_buf_t *cbw)
+void _scsi_read_capacity(usbus_handler_t *handler)
 {
-    (void)cbw;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     msc_read_capa_pkt_t pkt;
     size_t len = sizeof(msc_read_capa_pkt_t);
     pkt.blk_len = byteorder_swapl(mtd0->page_size);
-    pkt.last_blk = byteorder_swapl((mtd0->sector_count * mtd0->pages_per_sector)-1);
-
+    pkt.last_blk = byteorder_swapl(((mtd0->sector_count) * mtd0->pages_per_sector)-1);
+    if (mtd0->page_size != 512) {
+        DEBUG_PUTS("[msc]: unsupported page size");
+    }
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
@@ -174,16 +176,14 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler,
     (void)len;
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
 
-    /*TODO: Ensure this is a CBW packet by checking against the currently
-            unused len arg */
-
     /* store data into specific struct */
     msc_cbw_buf_t *cbw = (msc_cbw_buf_t*) ep->buf;
 
     /* Check Command Block signature */
     if (cbw->signature != SCSI_CBW_SIGNATURE) {
         DEBUG("Invalid CBW signature:0x%lx, abort\n", cbw->signature);
-        msc->cmd.status = -1;
+        msc->cmd.status = USB_MSC_CSW_STATUS_COMMAND_FAILED;
+        msc->state = GEN_CSW;
         return;
     }
 
@@ -240,7 +240,7 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler,
             break;
         case SCSI_READ_CAPACITY:
             DEBUG_PUTS("SCSI_READ_CAPACITY");
-            _scsi_read_capacity(handler, cbw);
+            _scsi_read_capacity(handler);
             break;
         case SCSI_READ10:
             DEBUG_PUTS("SCSI_READ10");

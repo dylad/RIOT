@@ -80,6 +80,7 @@ static void _write_xfer(usbus_msc_device_t *msc) {
         msc->block_offset += len;
         /* Decrement whole len */
         msc->cmd.len -= len;
+
         /* buffer is full, write it and point to new block if any */
         if (msc->block_offset >= mtd0->page_size) {
             mtd_write_page(mtd0, msc->buffer, msc->block, 0, mtd0->page_size);

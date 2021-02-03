@@ -993,7 +993,8 @@ endif
 
 ifneq (,$(filter usbus_msc,$(USEMODULE)))
   USEMODULE += usbus
-  USEMODULE += mtd_sdcard
+  USEMODULE += mtd
+  USEMODULE += mtd_write_page
 endif
 
 ifneq (,$(filter uuid,$(USEMODULE)))
