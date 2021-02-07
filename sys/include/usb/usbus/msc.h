@@ -63,6 +63,7 @@ typedef struct usbus_msc_device {
     uint32_t block;                 /**< First block to transfer data from/to */
     uint16_t block_nb;              /**< Number of block to transfer for READ and WRITE operations */
     uint16_t block_offset;          /**< Internal offset for endpoint size chunk transfer */
+    uint8_t  pages_per_vpage;       /**< Number of pages to fill host expected page size */
 } usbus_msc_device_t;
 
 /**

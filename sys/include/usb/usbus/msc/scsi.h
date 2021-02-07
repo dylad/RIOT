@@ -89,7 +89,7 @@ extern "c" {
 /**
  * @brief Packet structure to answer (@ref SCSI_TEST_UNIT_READY) request
  *
- * @see PDF
+ * @see Inquiry Command from SCSI Primary Command
  */
 typedef struct __attribute__((packed)) {
     uint8_t type;
@@ -97,6 +97,35 @@ typedef struct __attribute__((packed)) {
     uint8_t reserved[4];
     uint8_t pad[6];
 } msc_test_unit_pkt_t;
+
+/**
+ * @brief Packet structure to answer (@ref SCSI_MODE_SELECT6) and
+ * (@ref SCSI_MODE_SENSE6) requests
+ *
+ * @see Inquiry Command from SCSI Primary Command
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t mode_data_len;
+    uint8_t medium_type;
+    uint8_t flags;
+    uint8_t block_desc_len;
+} msc_mode_parameter_pkt_t;
+
+/**
+ * @brief CBW Packet structure for (@ref SCSI_READ10) and
+ * (@ref SCSI_WRITE10) requests
+ *
+ * @see Read10 or Write10 Command from SCSI Primary Command
+ *
+ * @warning uint16_t and uint32_t will be BIG ENDIAN
+ */
+typedef struct __attribute__((packed)) {
+    uint8_t opcode;
+    uint8_t flags;
+    uint32_t blk_addr;
+    uint8_t group_number;
+    uint16_t xfer_len;
+} msc_cbw_rw10_pkt_t;
 
 /**
  * @brief Packet structure to answer (@ref SCSI_INQUIRY) request
@@ -114,7 +143,7 @@ typedef struct __attribute__((packed)) {
     uint8_t response_format:4;  /**< Byte 3 [B3..B0] Response Data Format */
     uint8_t reserved3:4;        /**< Byte 3 [B7..B4] Reserved */
     uint8_t length;             /**< Byte 4 Additionnal Length (n-4) */
-    uint8_t unused[3];          /**< Byte 7..5 Miscellanous flags UNUSED BY USBUS ONLY */
+    uint8_t flags[3];           /**< Byte 7..5 Miscellanous flags UNUSED BY USBUS ONLY */
     uint8_t vendor_id[8];       /**< Byte 15..8 Vendor Identification */
     uint8_t product_id[16];     /**< Byte 31..16 Product Identification */
     uint8_t product_rev[4];     /**< Byte 35..32 Product Revision */
@@ -126,7 +155,7 @@ typedef struct __attribute__((packed)) {
  * @note Multiply the two values from this struct between them
  * indicates the total size of your MTD device
  *
- * @see PDF
+ * @see Read Capacities from SCSI Primary Command
  */
 typedef struct __attribute__((packed)) {
     uint32_t last_blk;  /**< Indicate last block number */

@@ -29,6 +29,8 @@
 #define ENABLE_DEBUG 0
 #include "debug.h"
 
+#define HOST_MINIMAL_PAGE_SIZE  512
+
 static void _rx_ready(usbus_msc_device_t *msc)
 {
     usbus_event_post(msc->usbus, &msc->rx_event);
@@ -56,18 +58,15 @@ void _scsi_test_unit_ready(usbus_handler_t *handler,  msc_cbw_buf_t *cbw)
 void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
 {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+    msc_cbw_rw10_pkt_t *pkt = (msc_cbw_rw10_pkt_t *)cbw->cb;
 
+    /* Convert big endian data from SCSI to little endian */
     /* Get first block number to read from */
-    msc->block = (cbw->cb[2] << 24) |
-                 (cbw->cb[3] << 16) |
-                 (cbw->cb[4] <<  8) |
-                 (cbw->cb[5] <<  0);
+    msc->block = byteorder_swapl(pkt->blk_addr);
 
     /* Get number of blocks to transfer */
-    msc->block_nb = (cbw->cb[7] <<  8) |
-                    (cbw->cb[8] <<  0);
+    msc->block_nb = byteorder_swaps(pkt->xfer_len);
 
-    /* FIXME: find a better way to manage this */
     msc->cmd.len = cbw->data_len;
     msc->state = DATA_TRANSFER;
 }
@@ -75,18 +74,15 @@ void _scsi_write10(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
 void _scsi_read10(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
 {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
+    msc_cbw_rw10_pkt_t *pkt = (msc_cbw_rw10_pkt_t *)cbw->cb;
 
+    /* Convert big endian data from SCSI to little endian */
     /* Get first block number to read from */
-    msc->block = (cbw->cb[2] << 24) |
-                 (cbw->cb[3] << 16) |
-                 (cbw->cb[4] <<  8) |
-                 (cbw->cb[5] <<  0);
+    msc->block = byteorder_swapl(pkt->blk_addr);
 
     /* Get number of blocks to transfer */
-    msc->block_nb = (cbw->cb[7] <<  8) |
-                    (cbw->cb[8] <<  0);
+    msc->block_nb = byteorder_swaps(pkt->xfer_len);
 
-    /* FIXME: find a better way to manage this */
     msc->cmd.len = cbw->data_len;
     msc->state = DATA_TRANSFER;
 
@@ -106,7 +102,7 @@ void _scsi_inquiry(usbus_handler_t *handler)
     pkt.removable = 1;
     pkt.version = 0x01;
     pkt.length = len - 4;
-    pkt.unused[0] = 0x80;
+    pkt.flags[0] = 0x80;
 
     memcpy(&pkt.vendor_id, USBUS_MSC_VENDOR_ID, sizeof(pkt.vendor_id));
     memcpy(&pkt.product_id, USBUS_MSC_PRODUCT_ID, sizeof(pkt.product_id));
@@ -123,49 +119,37 @@ void _scsi_read_capacity(usbus_handler_t *handler)
 {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     msc_read_capa_pkt_t pkt;
+    uint32_t blk_nb = (mtd0->sector_count * mtd0->pages_per_sector);
     size_t len = sizeof(msc_read_capa_pkt_t);
-    pkt.blk_len = byteorder_swapl(mtd0->page_size);
-    pkt.last_blk = byteorder_swapl(((mtd0->sector_count) * mtd0->pages_per_sector)-1);
-    if (mtd0->page_size != 512) {
-        DEBUG_PUTS("[msc]: unsupported page size");
-    }
+
+    assert(mtd0->page_size <= HOST_MINIMAL_PAGE_SIZE);
+
+    /* Host side expects to have at least 512 bytes per page, otherwise it will reject
+       the setup. Thus add some logic here to be able to use smaller page size mtd device */
+
+    pkt.blk_len = byteorder_swapl(HOST_MINIMAL_PAGE_SIZE);
+    msc->pages_per_vpage = HOST_MINIMAL_PAGE_SIZE / mtd0->page_size;
+    pkt.last_blk = byteorder_swapl(blk_nb - 1);
+
     /* copy into ep buffer */
     memcpy(msc->ep_in->ep->buf, &pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
     msc->state = WAIT_FOR_TRANSFER;
 }
 
-void _scsi_sense6(usbus_handler_t *handler, msc_cbw_buf_t *cbw)
-{
-    (void)cbw;
-    usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    uint8_t pkt[4];
-    size_t len = 4;
-    memset(&pkt, 0, len);
-    pkt[0] = 0x3;
-
-    /* copy into ep buffer */
-    memcpy(msc->ep_in->ep->buf, pkt, len);
-    usbdev_ep_ready(msc->ep_in->ep, len);
-    msc->state = WAIT_FOR_TRANSFER;
-}
-
-void _scsi_request_sense(usbus_handler_t *handler)
+void _scsi_sense6(usbus_handler_t *handler)
 {
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
-    uint8_t pkt[18];
-    size_t len = 18;
+    msc_mode_parameter_pkt_t pkt;
+    size_t len = sizeof(pkt);
     memset(&pkt, 0, len);
-
-    pkt[0] = 0x70;
-    pkt[2] = 0x02;
-    pkt[7] = 0x0A;
-    pkt[12] = 0x30;
-    pkt[13] = 0x01;
+    /* Length of the packet minus the first byte */
+    pkt.mode_data_len = len - 1;
 
     /* copy into ep buffer */
-    memcpy(msc->ep_in->ep->buf, pkt, len);
+    memcpy(msc->ep_in->ep->buf, &pkt, len);
     usbdev_ep_ready(msc->ep_in->ep, len);
+    /* Wait for the current pkt to transfer before sending CSW */
     msc->state = WAIT_FOR_TRANSFER;
 }
 
@@ -198,8 +182,8 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler,
             _scsi_test_unit_ready(handler, cbw);
             break;
         case SCSI_REQUEST_SENSE:
-            DEBUG_PUTS("SCSI_REQUEST_SENSE");
-            _scsi_request_sense(handler);
+            DEBUG_PUTS("todo:SCSI_REQUEST_SENSE");
+            msc->state=GEN_CSW;
             break;
         case SCSI_FORMAT_UNIT:
             DEBUG_PUTS("TODO: SCSI_FORMAT_UNIT");
@@ -224,7 +208,7 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler,
             break;
         case SCSI_MODE_SENSE6:
             DEBUG_PUTS("SCSI_MODE_SENSE6");
-            _scsi_sense6(handler, cbw);
+            _scsi_sense6(handler);
             break;
         case SCSI_MODE_SELECT10:
             DEBUG_PUTS("TODO: SCSI_MODE_SELECT10");
