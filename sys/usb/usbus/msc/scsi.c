@@ -7,11 +7,11 @@
  */
 
 /**
- * @ingroup usbus_msc SCSI protocol implementation for USB MSC
+ * @ingroup usbus_msc
  * @{
  *
  * @note    Keep in mind that SCSI is a big endian protocol and
- *          USB transfer data as little endian    
+ *          USB transfer data as little endian
  *
  * @author  Dylan Laduranty <dylan.laduranty@mesotic.com>
  * @}
@@ -98,7 +98,7 @@ void _scsi_inquiry(usbus_handler_t *handler)
     size_t len = sizeof(msc_inquiry_pkt_t);
     memset(&pkt, 0, len);
     /* prepare pkt response */
-    pkt.type = SCSI_INQUIRY_CONNECTED;
+    pkt.type = 0;
     pkt.removable = 1;
     pkt.version = 0x01;
     pkt.length = len - 4;

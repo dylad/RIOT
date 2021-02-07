@@ -21,7 +21,7 @@
 #define USB_USBUS_MSC_SCSI_H
 
 #ifdef __cplusplus
-extern "c" {
+extern "C" {
 #endif
 
 #ifndef USBUS_MSC_VENDOR_ID
@@ -74,9 +74,6 @@ extern "c" {
  */
 #define SCSI_CSW_SIGNATURE              0x53425355
 
-
-#define SCSI_INQUIRY_CONNECTED          0x00
-
 /**
  * @name USB SCSI Version list
  * @{
@@ -92,10 +89,9 @@ extern "c" {
  * @see Inquiry Command from SCSI Primary Command
  */
 typedef struct __attribute__((packed)) {
-    uint8_t type;
-    uint8_t logical_unit;
-    uint8_t reserved[4];
-    uint8_t pad[6];
+    uint8_t type;           /**< type of device */
+    uint8_t logical_unit;   /**< Selected LUN */
+    uint8_t reserved[10];   /**< Reserved */
 } msc_test_unit_pkt_t;
 
 /**
@@ -105,10 +101,10 @@ typedef struct __attribute__((packed)) {
  * @see Inquiry Command from SCSI Primary Command
  */
 typedef struct __attribute__((packed)) {
-    uint8_t mode_data_len;
-    uint8_t medium_type;
-    uint8_t flags;
-    uint8_t block_desc_len;
+    uint8_t mode_data_len;      /**< Size of the whole packet */
+    uint8_t medium_type;        /**< Type of medium */
+    uint8_t flags;              /**< Miscellaneous flags */
+    uint8_t block_desc_len;     /**< Length of block descriptor */
 } msc_mode_parameter_pkt_t;
 
 /**
@@ -120,11 +116,11 @@ typedef struct __attribute__((packed)) {
  * @warning uint16_t and uint32_t will be BIG ENDIAN
  */
 typedef struct __attribute__((packed)) {
-    uint8_t opcode;
-    uint8_t flags;
-    uint32_t blk_addr;
-    uint8_t group_number;
-    uint16_t xfer_len;
+    uint8_t opcode;         /**< Operation code */
+    uint8_t flags;          /**< Miscellaneous flags */
+    uint32_t blk_addr;      /**< Block address */
+    uint8_t group_number;   /**< Group number */
+    uint16_t xfer_len;      /**< Transfer lenght in bytes */
 } msc_cbw_rw10_pkt_t;
 
 /**
@@ -191,11 +187,14 @@ typedef struct __attribute__((packed)) {
     uint8_t  status;    /**< Status of the command */
 } msc_csw_buf_t;
 
-/* TODO: check if we can do without this */
+/**
+ * @brief USBUS Command Block Wrapper information
+ *
+ */
 typedef struct {
-    uint32_t tag;
-    size_t len;
-    uint8_t status;
+    uint32_t tag;   /**< Store tag information from CBW */
+    size_t len;     /**< Remaining bytes to handle */
+    uint8_t status; /**< Status of the current operation */
 } cbw_info_t;
 
 /**
@@ -211,8 +210,8 @@ void scsi_process_cmd(usbus_t *usbus, usbus_handler_t *handler, usbdev_ep_t *ep,
 /**
  * @brief Generate Command Status Wrapper and send it to the host
  *
- * @param   usbus   USBUS thread to use
- * @param   cmd     struct containing needed informations to generate CBW response
+ * @param   handler   MSC device struct
+ * @param   cmd       struct containing needed informations to generate CBW response
  */
 void scsi_gen_csw(usbus_handler_t *handler, cbw_info_t cmd);
 

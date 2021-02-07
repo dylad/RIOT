@@ -27,7 +27,7 @@
 #include "usb/usbus/msc/scsi.h"
 
 #ifdef __cplusplus
-extern "c" {
+extern "C" {
 #endif
 
 #ifndef USBUS_MSC_BLOCK_NUM
@@ -61,7 +61,8 @@ typedef struct usbus_msc_device {
     usbus_msc_state_t state;        /**< Internal state machine for msc */
     uint8_t *buffer;                /**< Pointer to the current data transfer buffer */
     uint32_t block;                 /**< First block to transfer data from/to */
-    uint16_t block_nb;              /**< Number of block to transfer for READ and WRITE operations */
+    uint16_t block_nb;              /**< Number of block to transfer for READ and
+                                         WRITE operations */
     uint16_t block_offset;          /**< Internal offset for endpoint size chunk transfer */
     uint8_t  pages_per_vpage;       /**< Number of pages to fill host expected page size */
 } usbus_msc_device_t;

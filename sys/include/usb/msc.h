@@ -27,7 +27,7 @@
 #include "usb/usbus.h"
 
 #ifdef __cplusplus
-extern "c" {
+extern "C" {
 #endif
 
 /**
@@ -55,7 +55,8 @@ extern "c" {
  * @{
  */
 #define USB_MSC_PROTOCOL_CBI_CCI      0x00  /**< CBI transport with command completion interrupt*/
-#define USB_MSC_PROTOCOL_CBI_NO_CCI   0x01  /**< CBI transport without command completion interrupt */
+#define USB_MSC_PROTOCOL_CBI_NO_CCI   0x01  /**< CBI transport without command completion \
+                                                 interrupt */
 #define USB_MSC_PROTOCOL_BBB          0x50  /**< Bulk only (BBB) transport */
 #define USB_MSC_PROTOCOL_UAS          0x62  /**< UAS allocated by USB-IF */
 #define USB_MSC_PROTOCOL_VENDOR       0xFF  /**< Vendor Specific */

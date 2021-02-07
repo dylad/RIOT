@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup usb_msc Mass Storage Class implementation
+ * @ingroup usbus_msc
  * @{
  *
  * @author  Dylan Laduranty <dylan.laduranty@mesotic.com>
@@ -104,7 +104,7 @@ static void _xfer_data( usbus_msc_device_t *msc)
         /* read buffer from mtd device */
         if (msc->block_offset == 0) {
             mtd_read_page(mtd0, msc->buffer, msc->block * msc->pages_per_vpage,
-                          0 , mtd0->page_size * msc->pages_per_vpage);
+                          0, mtd0->page_size * msc->pages_per_vpage);
         }
         /* Prepare endpoint buffer */
         memcpy(msc->ep_in->ep->buf, &msc->buffer[msc->block_offset], 64);
@@ -206,7 +206,7 @@ static int _control_handler(usbus_t *usbus, usbus_handler_t *handler,
     usbus_msc_device_t *msc = (usbus_msc_device_t*)handler;
     static usbopt_enable_t enable = USBOPT_ENABLE;
 
-    switch(setup->request) {
+    switch (setup->request) {
         case USB_MSC_SETUP_REQ_GML:
             /* Stall as we don't support this feature */
             usbdev_ep_set(msc->ep_in->ep, USBOPT_EP_STALL, &enable,
@@ -272,7 +272,7 @@ static void _event_handler(usbus_t *usbus, usbus_handler_t *handler,
 {
     (void) usbus;
     (void) handler;
-    switch(event) {
+    switch (event) {
         case USBUS_EVENT_USB_RESET:
             DEBUG_PUTS("EVENT RESET");
             break;
