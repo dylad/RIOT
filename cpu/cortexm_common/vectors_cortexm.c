@@ -151,20 +151,38 @@ void reset_handler_default(void)
      * This marks the memory region from 0x20000000 to 0x3FFFFFFF as non
      * executable. This is the Cortex-M SRAM region used for on-chip RAM.
      */
-    mpu_configure(
+#if __MPU_PRESENT && (defined(__ARM_ARCH_7M_MAIN__) || defined(__ARM_ARCH_7M_BASE__))
+    mpu_configure_v7(
         0,                                               /* Region 0 (lowest priority) */
         (uintptr_t)&_sram,                               /* RAM base address */
-        MPU_ATTR(1, AP_RW_RW, 0, 1, 0, 1, MPU_SIZE_512M) /* Allow read/write but no exec */
+        MPU_ATTR_V7(1, AP_RW_RW_V7, 0, 1, 0, 1, MPU_SIZE_512M) /* Allow read/write but no exec */
     );
+#elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
+    mpu_configure_v8(
+        0,                                               /* Region 0 (lowest priority) */
+        (uintptr_t)&_sram,                               /* RAM base address */
+        (uintptr_t)&_eram,                               /* End of RAM region */
+        MPU_ATTR_V8(1, AP_RW_RW_V8, 1)                      /* Allow read/write but no exec */
+    );
+#endif /* armv7 */
 #endif
 
 #ifdef MODULE_MPU_STACK_GUARD
     if (((uintptr_t)&_sstack) != SRAM_BASE) {
-        mpu_configure(
+#if __MPU_PRESENT && (defined(__ARM_ARCH_7M_MAIN__) || defined(__ARM_ARCH_7M_BASE__))
+        mpu_configure_v7(
             1,                                              /* MPU region 1 */
             (uintptr_t)&_sstack + 31,                       /* Base Address (rounded up) */
-            MPU_ATTR(1, AP_RO_RO, 0, 1, 0, 1, MPU_SIZE_32B) /* Attributes and Size */
+            MPU_ATTR_V7(1, AP_RO_RO_V7, 0, 1, 0, 1, MPU_SIZE_32B) /* Attributes and Size */
         );
+#elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
+        mpu_configure_v8(
+            1,                              /* MPU region 1 */
+            (uintptr_t)&_sstack + 31,       /* Base Address (rounded up) */
+            (uintptr_t)&_sstack + 63,       /* End  Address (rounded up) */
+            MPU_ATTR_V8(0, AP_RO_RO_V8, 1)     /* Attributes */
+    );
+#endif
 
     }
 #endif
