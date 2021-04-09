@@ -1,7 +1,6 @@
 CPU_CORE = cortex-m23
 
-# TODO: The cortex-m23 MPU is not ported
-# FEATURES_PROVIDED += cortexm_mpu
+FEATURES_PROVIDED += cortexm_mpu
 
 FEATURES_PROVIDED += periph_hwrng
 FEATURES_PROVIDED += periph_gpio_fast_read
