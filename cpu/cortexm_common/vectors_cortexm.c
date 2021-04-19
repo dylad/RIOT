@@ -144,6 +144,10 @@ void reset_handler_default(void)
     }
 #endif /* CPU_HAS_BACKUP_RAM */
 
+    /* initialize the board (which also initiates CPU initialization) */
+    board_init();
+    LED0_ON;
+    LED0_OFF;
 #ifdef MODULE_MPU_NOEXEC_RAM
     /* Mark the RAM non executable. This is a protection mechanism which
      * makes exploitation of buffer overflows significantly harder.
@@ -162,7 +166,7 @@ void reset_handler_default(void)
         0,                                               /* Region 0 (lowest priority) */
         (uintptr_t)&_sram,                               /* RAM base address */
         (uintptr_t)&_eram,                               /* End of RAM region */
-        MPU_ATTR_V8(1, AP_RW_RW_V8, 1)                      /* Allow read/write but no exec */
+        MPU_ATTR_V8(0, AP_RW_RW_V8, 1)                      /* Allow read/write but no exec */
     );
 #endif /* armv7 */
 #endif
@@ -190,15 +194,12 @@ void reset_handler_default(void)
 #if defined(MODULE_MPU_STACK_GUARD) || defined(MODULE_MPU_NOEXEC_RAM)
     mpu_enable();
 #endif
-
+    LED0_ON;
     post_startup();
 
 #ifdef MODULE_DBGPIN
     dbgpin_init();
 #endif
-
-    /* initialize the board (which also initiates CPU initialization) */
-    board_init();
 
 #if MODULE_NEWLIB || MODULE_PICOLIBC
     /* initialize std-c library (this must be done after board_init) */

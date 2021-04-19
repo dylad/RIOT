@@ -209,7 +209,7 @@ thread_t *__attribute__((used)) sched_run(void)
             2,                                              /* MPU region 2 */
             (uintptr_t)next_thread->stack_start + 31,       /* Base Address (rounded up) */
             (uintptr_t)next_thread->stack_start + 63,       /* End  Address (rounded up) */
-            MPU_ATTR_V8(0, AP_RO_RO_V8, 1)                  /* Attributes */
+            MPU_ATTR_V8(1, AP_RO_RO_V8, 1)                  /* Attributes */
     );
 #endif /* ARMv7 */
 #endif /* MODULE_MPU_STACK_GUARD */
