@@ -205,12 +205,12 @@ thread_t *__attribute__((used)) sched_run(void)
             MPU_ATTR_V7(1, AP_RO_RO_V7, 0, 1, 0, 1, MPU_SIZE_32B) /* Attributes and Size */
             );
 #elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
-        mpu_configure_v8(
-            2,                                              /* MPU region 2 */
-            (uintptr_t)next_thread->stack_start + 31,       /* Base Address (rounded up) */
-            (uintptr_t)next_thread->stack_start + 63,       /* End  Address (rounded up) */
-            MPU_ATTR_V8(1, AP_RO_RO_V8, 1)                  /* Attributes */
-    );
+    uint32_t stk = (uint32_t)next_thread->stack_start;
+    mpu_configure_v8(
+        2,                                               
+        ARM_MPU_RBAR((uint32_t)(stk + 31), ARM_MPU_SH_NON, 0UL, 1UL, 1UL),
+        ARM_MPU_RLAR((uint32_t)(stk + 63), 2UL),
+        ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 0UL, 0UL), ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 0UL, 0UL)));
 #endif /* ARMv7 */
 #endif /* MODULE_MPU_STACK_GUARD */
         DEBUG("sched_run: done, changed sched_active_thread.\n");

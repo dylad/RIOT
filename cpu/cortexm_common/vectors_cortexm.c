@@ -155,6 +155,7 @@ void reset_handler_default(void)
      * This marks the memory region from 0x20000000 to 0x3FFFFFFF as non
      * executable. This is the Cortex-M SRAM region used for on-chip RAM.
      */
+    mpu_disable();
 #if __MPU_PRESENT && (defined(__ARM_ARCH_7M_MAIN__) || defined(__ARM_ARCH_7M_BASE__))
     mpu_configure_v7(
         0,                                               /* Region 0 (lowest priority) */
@@ -163,11 +164,10 @@ void reset_handler_default(void)
     );
 #elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
     mpu_configure_v8(
-        0,                                               /* Region 0 (lowest priority) */
-        (uintptr_t)&_sram,                               /* RAM base address */
-        (uintptr_t)&_eram,                               /* End of RAM region */
-        MPU_ATTR_V8(0, AP_RW_RW_V8, 1)                      /* Allow read/write but no exec */
-    );
+        0,                                               
+        ARM_MPU_RBAR((uint32_t)0x20000000, ARM_MPU_SH_NON, 0UL, 0UL, 1UL),
+        ARM_MPU_RLAR((uint32_t)0x3FFFFFFF, 0UL),
+        ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 0UL, 0UL), ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 0UL, 0UL)));
 #endif /* armv7 */
 #endif
 
@@ -180,12 +180,12 @@ void reset_handler_default(void)
             MPU_ATTR_V7(1, AP_RO_RO_V7, 0, 1, 0, 1, MPU_SIZE_32B) /* Attributes and Size */
         );
 #elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
-        mpu_configure_v8(
-            1,                              /* MPU region 1 */
-            (uintptr_t)&_sstack + 31,       /* Base Address (rounded up) */
-            (uintptr_t)&_sstack + 63,       /* End  Address (rounded up) */
-            MPU_ATTR_V8(0, AP_RO_RO_V8, 1)     /* Attributes */
-    );
+    uint32_t stk = (uint32_t)&_sstack;
+    mpu_configure_v8(
+        1,                                               
+        ARM_MPU_RBAR((uint32_t)(stk + 31), ARM_MPU_SH_NON, 0UL, 1UL, 1UL),
+        ARM_MPU_RLAR((uint32_t)(stk + 63), 1UL),
+        ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0UL, 1UL, 1UL, 1UL), ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 1UL, 1UL)));
 #endif
 
     }

@@ -201,8 +201,8 @@ int mpu_configure_v7(uint_fast8_t region, uintptr_t base, uint_fast32_t attr);
  * @return 0 on success
  * @return <0 on failure or no MPU present
  */
-int mpu_configure_v8(uint_fast8_t region, uintptr_t base, uintptr_t end,
-                     uint_fast32_t attr);
+int mpu_configure_v8(uint32_t region, uint32_t rbar, uint32_t rlar,
+                     uint32_t attr);
 
 #ifdef __cplusplus
 }

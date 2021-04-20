@@ -62,16 +62,16 @@ int mpu_configure_v7(uint_fast8_t region, uintptr_t base, uint_fast32_t attr) {
 #endif
 }
 
-int mpu_configure_v8(uint_fast8_t region, uintptr_t base, uintptr_t end,
-                     uint_fast32_t attr)
+int mpu_configure_v8(uint32_t region, uint32_t rbar, uint32_t rlar, uint32_t attr)
 {
-#if __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) && defined(__ARM_ARCH_8M_BASE__))
-    ARM_MPU_SetRegionEx(MPU, region, base | attr, end | MPU_RLAR_EN_Msk);
+#if __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
+    ARM_MPU_SetMemAttrEx(MPU, region, attr);
+    ARM_MPU_SetRegionEx(MPU, region, rbar, rlar);
     return 0;
 #else
     (void)region;
-    (void)base;
-    (void)end;
+    (void)rbar;
+    (void)rlar;
     (void)attr;
     return -1;
 #endif
