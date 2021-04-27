@@ -165,24 +165,31 @@ void reset_handler_default(void)
 #elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
     mpu_configure_v8(
         0,                                               
-        ARM_MPU_RBAR((uint32_t)0x20000000, ARM_MPU_SH_NON, 0UL, 0UL, 1UL),
-        ARM_MPU_RLAR((uint32_t)0x3FFFFFFF, 0UL),
-        ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 0UL, 0UL), ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 0UL, 0UL)));
+        ARM_MPU_RBAR((uint32_t)&_sram, ARM_MPU_SH_OUTER, 0UL, 1UL, 1UL),
+        ARM_MPU_RLAR((uint32_t)&_eram, 0UL),
+        ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 1UL, 1UL), ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 1UL, 1UL)));
+
+    mpu_configure_v8(
+        1,                                               
+        ARM_MPU_RBAR((uint32_t)0x40000000, ARM_MPU_SH_NON, 0UL, 1UL, 0UL),
+        ARM_MPU_RLAR((uint32_t)0x4FFFFFFF, 1UL),
+        ARM_MPU_ATTR(ARM_MPU_ATTR_DEVICE, ARM_MPU_ATTR_DEVICE_nGnRnE));
 #endif /* armv7 */
 #endif
 
+#if 0
 #ifdef MODULE_MPU_STACK_GUARD
     if (((uintptr_t)&_sstack) != SRAM_BASE) {
 #if __MPU_PRESENT && (defined(__ARM_ARCH_7M_MAIN__) || defined(__ARM_ARCH_7M_BASE__))
         mpu_configure_v7(
-            1,                                              /* MPU region 1 */
+            1,          d                                    /* MPU region 1 */
             (uintptr_t)&_sstack + 31,                       /* Base Address (rounded up) */
             MPU_ATTR_V7(1, AP_RO_RO_V7, 0, 1, 0, 1, MPU_SIZE_32B) /* Attributes and Size */
         );
 #elif __MPU_PRESENT && (defined(__ARM_ARCH_8M_MAIN__) || defined(__ARM_ARCH_8M_BASE__))
     uint32_t stk = (uint32_t)&_sstack;
     mpu_configure_v8(
-        1,                                               
+        1,               c                                
         ARM_MPU_RBAR((uint32_t)(stk + 31), ARM_MPU_SH_NON, 0UL, 1UL, 1UL),
         ARM_MPU_RLAR((uint32_t)(stk + 63), 1UL),
         ARM_MPU_ATTR(ARM_MPU_ATTR_MEMORY_(0UL, 1UL, 1UL, 1UL), ARM_MPU_ATTR_MEMORY_(0UL, 0UL, 1UL, 1UL)));
@@ -190,11 +197,12 @@ void reset_handler_default(void)
 
     }
 #endif
-
+#endif
 #if defined(MODULE_MPU_STACK_GUARD) || defined(MODULE_MPU_NOEXEC_RAM)
     mpu_enable();
 #endif
     LED0_ON;
+
     post_startup();
 
 #ifdef MODULE_DBGPIN

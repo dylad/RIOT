@@ -41,9 +41,9 @@ ifeq (, $(filter no_idle_thread, $(FEATURES_USED)))
 endif
 
 # use mpu_stack_guard if the feature is used
-ifneq (,$(filter cortexm_mpu,$(FEATURES_USED)))
-  USEMODULE += mpu_stack_guard
-endif
+#ifneq (,$(filter cortexm_mpu,$(FEATURES_USED)))
+#  USEMODULE += mpu_stack_guard
+#endif
 
 # use picolibc if the feature is used
 ifneq (,$(filter picolibc,$(FEATURES_USED)))
