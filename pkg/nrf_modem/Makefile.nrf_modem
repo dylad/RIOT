@@ -1,0 +1,3 @@
+MODULE = nrf_modem
+
+include $(RIOTBASE)/Makefile.base
