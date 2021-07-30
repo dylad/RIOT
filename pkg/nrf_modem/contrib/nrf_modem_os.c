@@ -31,6 +31,28 @@ void nrf_modem_os_init(void) {
     // Initialize trace medium used in the nrf_modem_os_trace_put function.
 }
 
+void *nrf_modem_os_shm_tx_alloc(size_t bytes) {
+    (void)bytes;
+    return NULL;
+}
+
+void nrf_modem_os_shm_tx_free(void *mem) {
+    (void)mem;
+}
+
+void *nrf_modem_os_alloc(size_t bytes) {
+    (void)bytes;
+    return NULL;
+}
+
+void nrf_modem_os_free(void *mem) {
+    (void)mem;
+}
+
+void nrf_modem_os_busywait(int32_t usec) {
+    (void)usec;
+}
+
 int32_t nrf_modem_os_timedwait(uint32_t context, int32_t * timeout)
 {
     (void)context;
@@ -46,6 +68,10 @@ int32_t nrf_modem_os_timedwait(uint32_t context, int32_t * timeout)
 void nrf_modem_os_errno_set(int errno_val) {
     (void)errno_val;
     // Translate nrf_errno.h errno to the OS specific value.
+}
+
+bool nrf_modem_os_is_in_isr(void) {
+    return false;
 }
 
 void nrf_modem_os_application_irq_set(void) {

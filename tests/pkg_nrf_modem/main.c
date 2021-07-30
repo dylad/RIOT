@@ -21,11 +21,21 @@
 #include <stdio.h>
 #include <string.h>
 #include "nrf_modem_os.h"
+#include "nrf_modem.h"
 
 
 int main(void)
 {
     puts("nrf modem test application\n");
+
+    int ret;
+    /* Initialize Modem librairy */
+    ret = nrf_modem_init(NULL, NORMAL_MODE);
+    if (ret != 0) {
+        puts("Init failed");
+        return ret;
+    }
+    puts("lib init");
    
     return 0;
 }
