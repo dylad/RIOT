@@ -1,0 +1,4 @@
+USEMODULE += periph
+USEMODULE += polarfire_sdk
+
+include $(RIOTCPU)/riscv_common/Makefile.dep
