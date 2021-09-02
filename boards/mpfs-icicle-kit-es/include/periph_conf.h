@@ -41,7 +41,13 @@ extern "C" {
  * @name    UART configuration
  * @{
  */
+static const uart_conf_t uart_config[] = {
+    {    /* E51 UART */
+        .dev = NULL,
+    },
+};
 
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
 /** @} */
 
 /**

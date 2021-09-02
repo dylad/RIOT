@@ -21,6 +21,7 @@
 #include "vendor/mss_address_map.h"
 #include "vendor/mss_sysreg.h"
 #include "vendor/mss_gpio.h"
+#include "vendor/mss_uart.h"
 #include "cpu_conf_common.h"
 
 #ifndef CPU_CONF_H
