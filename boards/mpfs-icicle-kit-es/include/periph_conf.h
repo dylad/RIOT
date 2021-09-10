@@ -28,7 +28,7 @@ extern "C" {
 /**
  * @brief   GCLK reference speed
  */
-#define CLOCK_CORECLOCK     (48000000U)
+#define CLOCK_CORECLOCK     (800000000U)
 
 /**
  * @name    Timer peripheral configuration
@@ -41,6 +41,7 @@ extern "C" {
  * @name    UART configuration
  * @{
  */
+#if 0
 static const uart_conf_t uart_config[] = {
     {    /* E51 UART */
         .dev = NULL,
@@ -48,6 +49,7 @@ static const uart_conf_t uart_config[] = {
 };
 
 #define UART_NUMOF          ARRAY_SIZE(uart_config)
+#endif
 /** @} */
 
 /**
