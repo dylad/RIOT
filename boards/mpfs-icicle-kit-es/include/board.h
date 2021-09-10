@@ -29,10 +29,35 @@ extern "C" {
  * @name    LED pin definitions and handlers
  * @{
  */
-#define LED0_PIN            GPIO_PIN(1, 10)
+#define LED0_PIN            GPIO_PIN(2, 16)
+#define LED1_PIN            GPIO_PIN(2, 17)
+#define LED2_PIN            GPIO_PIN(2, 18)
+#define LED3_PIN            GPIO_PIN(2, 19)
 
-#define LED_PORT            PORT->Group[1]
-#define LED0_MASK           (1 << 10)
+/* GPIO2_LO->GPIO_SET_BITS |= (1 << 16);*/
+#define LED_PORT            GPIO2_LO
+#define LED0_MASK           (1 << 16)
+#define LED1_MASK           (1 << 17)
+#define LED2_MASK           (1 << 18)
+#define LED3_MASK           (1 << 19)
+
+
+#define LED0_ON             (LED_PORT->GPIO_SET_BITS = LED0_MASK)
+#define LED0_OFF            (LED_PORT->GPIO_CLR_BITS = LED0_MASK)
+#define LED0_TOGGLE         (LED_PORT->GPIO_OUT   ^= LED0_MASK)
+
+#define LED1_ON             (LED_PORT->GPIO_SET_BITS = LED1_MASK)
+#define LED1_OFF            (LED_PORT->GPIO_CLR_BITS = LED1_MASK)
+#define LED1_TOGGLE         (LED_PORT->GPIO_OUT   ^= LED1_MASK)
+
+#define LED2_ON             (LED_PORT->GPIO_SET_BITS = LED2_MASK)
+#define LED2_OFF            (LED_PORT->GPIO_CLR_BITS = LED2_MASK)
+#define LED2_TOGGLE         (LED_PORT->GPIO_OUT   ^= LED2_MASK)
+
+#define LED3_ON             (LED_PORT->GPIO_SET_BITS = LED3_MASK)
+#define LED3_OFF            (LED_PORT->GPIO_CLR_BITS = LED3_MASK)
+#define LED3_TOGGLE         (LED_PORT->GPIO_OUT   ^= LED3_MASK)
+
 /** @} */
 
 /**
