@@ -39,7 +39,7 @@
  *
  * @return              base register address
  */
-static inline UART_TypeDef *dev(uart_t dev)
+static inline MSS_UART_TypeDef *dev(uart_t dev)
 {
     return uart_config[dev].dev;
 }

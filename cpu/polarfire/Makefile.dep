@@ -1,4 +1,5 @@
 USEMODULE += periph
-USEMODULE += polarfire_sdk
+
+USEPKG += mpfs_sdk
 
 include $(RIOTCPU)/riscv_common/Makefile.dep

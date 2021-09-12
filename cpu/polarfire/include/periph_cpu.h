@@ -49,6 +49,11 @@ typedef int gpio_af_t;
 
 /** @} */
 
+
+typedef struct {
+    MSS_UART_TypeDef *dev;       /**< pointer to the used UART device */
+} uart_conf_t;
+
 #ifdef __cplusplus
 }
 #endif

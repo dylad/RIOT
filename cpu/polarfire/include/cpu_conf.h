@@ -17,11 +17,10 @@
  */
 
 /* TODO Update vendor CPU core header to Polarfire */
-//#include "vendor/gd32vf103_core.h"
-#include "vendor/mss_address_map.h"
-#include "vendor/mss_sysreg.h"
-#include "vendor/mss_gpio.h"
-#include "vendor/mss_uart.h"
+#include "mpfs_hal/mss_hal.h"
+#include "drivers/mss/mss_gpio/mss_gpio.h"
+#include "drivers/mss/mss_mmuart/mss_uart.h"
+
 #include "cpu_conf_common.h"
 
 #ifndef CPU_CONF_H

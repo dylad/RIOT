@@ -8,4 +8,8 @@ ITIM_LEN = 28K
 
 LINKER_SCRIPT ?= riscv.ld
 
+# Force buildsystem to use mpfs sdk csr definitions
+#   instead of the ones provided by riscv_common 
+CFLAGS += -DUSE_OWN_CSR_REG
+
 include $(RIOTCPU)/riscv_common/Makefile.include

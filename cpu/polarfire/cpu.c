@@ -27,13 +27,14 @@ extern void __libc_init_array(void);
 
 void cpu_init(void)
 {
-    //gd32vf103_clock_init();
     /* Common RISC-V initialization */
     riscv_init();
 
-/* Disable stdio for some time */
-#if 0
+    /* Turn on clock */
+    SYSREG->SUBBLK_CLOCK_CR |= (1 << 22);
+    /* Remove soft reset */
+    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(1 << 22);
+
     stdio_init();
     periph_init();
-#endif
 }

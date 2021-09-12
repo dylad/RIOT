@@ -41,15 +41,15 @@ extern "C" {
  * @name    UART configuration
  * @{
  */
-#if 0
+#define MSS_UART1_LO_BASE           (MSS_UART_TypeDef*)0x20100000UL
 static const uart_conf_t uart_config[] = {
     {    /* E51 UART */
-        .dev = NULL,
+        .dev =  MSS_UART1_LO_BASE,
     },
 };
 
 #define UART_NUMOF          ARRAY_SIZE(uart_config)
-#endif
+
 /** @} */
 
 /**
