@@ -1,0 +1,5 @@
+MODULE=mpfs_peripherals
+
+SRC += mss_peripherals.c mss_util.c
+
+include $(RIOTBASE)/Makefile.base

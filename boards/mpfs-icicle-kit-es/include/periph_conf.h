@@ -28,7 +28,7 @@ extern "C" {
 /**
  * @brief   GCLK reference speed
  */
-#define CLOCK_CORECLOCK     (800000000U)
+#define CLOCK_CORECLOCK     (600000000U)
 
 /**
  * @name    Timer peripheral configuration

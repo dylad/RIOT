@@ -35,6 +35,9 @@ void cpu_init(void)
     /* Remove soft reset */
     SYSREG->SOFT_RESET_CR   &= (uint32_t)~(1 << 22);
 
+    PLIC_init();
+    __enable_irq();
+
     stdio_init();
     periph_init();
 }

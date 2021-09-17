@@ -1,2 +1,3 @@
 INCLUDES += -I$(PKGDIRBASE)/mpfs_sdk/
+INCLUDES += -I$(PKGDIRBASE)/mpfs_sdk/drivers/mss/mss_mmuart/
 INCLUDES += -I$(PKGDIRBASE)/mpfs_sdk/platform_config_reference/

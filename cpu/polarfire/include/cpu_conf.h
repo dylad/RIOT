@@ -18,6 +18,8 @@
 
 /* TODO Update vendor CPU core header to Polarfire */
 #include "mpfs_hal/mss_hal.h"
+#include "mpfs_hal/common/mss_peripherals.h"
+#include "mpfs_hal/common/mss_plic.h"
 #include "drivers/mss/mss_gpio/mss_gpio.h"
 #include "drivers/mss/mss_mmuart/mss_uart.h"
 

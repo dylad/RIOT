@@ -1,0 +1,5 @@
+MODULE=mpfs_sdk
+
+SRC += mss_uart.c
+
+include $(RIOTBASE)/Makefile.base
