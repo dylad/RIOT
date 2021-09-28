@@ -35,8 +35,9 @@ void cpu_init(void)
     /* Remove soft reset */
     SYSREG->SOFT_RESET_CR   &= (uint32_t)~(1 << 22);
 
-    PLIC_init();
-    __enable_irq();
+    mss_config_clk_rst(MSS_PERIPH_CFM, (uint8_t) MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
+
+    SYSREG->GPIO_INTERRUPT_FAB_CR = 0xFFFFFFFFUL;
 
     stdio_init();
     periph_init();
