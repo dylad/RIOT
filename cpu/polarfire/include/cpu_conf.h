@@ -22,6 +22,7 @@
 #include "mpfs_hal/common/mss_plic.h"
 #include "drivers/mss/mss_gpio/mss_gpio.h"
 #include "drivers/mss/mss_mmuart/mss_uart.h"
+#include "drivers/mss/mss_timer/mss_timer.h"
 
 #include "cpu_conf_common.h"
 
@@ -37,7 +38,6 @@ extern "C" {
  * @brief   Polarfire SoC doesn't use the MIE CSR
  */
 #define HAVE_CSR_MIE                    (0)
-
 
 #ifdef __cplusplus
 }
