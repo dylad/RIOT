@@ -1,5 +1,15 @@
 MODULE=mpfs_sdk
 
-SRC += mss_uart.c
+SRC += mss_uart.c mss_gpio.c
 
 include $(RIOTBASE)/Makefile.base
+
+
+
+
+#MODULE=mpfs_sdk
+
+#SRC += mss_uart.c
+
+#include $(RIOTBASE)/Makefile.base
+

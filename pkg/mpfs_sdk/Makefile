@@ -9,15 +9,19 @@ ifneq ($(CPU),polarfire)
   $(error This package can only be used with MPFS CPUs)
 endif
 
-MPFS_MODULES = mpfs_sdk mpfs_peripherals
+MPFS_MODULES = mpfs_sdk mpfs_hal
 
-DIR_mpfs_peripherals = mpfs_hal/common
-DIR_mpfs_sdk = drivers/mss/mss_mmuart
 
 .PHONY = mpfs_%
 
 all: $(MPFS_MODULES)
 
-mpfs_%:
-	$(QQ)"$(MAKE)" -C $(PKG_SOURCE_DIR)/$(DIR_$@) -f $(CURDIR)/Makefile.$@
+# First copy all needed files and gather them in a single place
+mpfs_sdk:
+	@cp $(PKG_SOURCE_DIR)/drivers/mss/mss_gpio/mss_gpio.c $(PKG_BUILD_DIR)/
+	@cp $(PKG_SOURCE_DIR)/drivers/mss/mss_mmuart/mss_uart.c $(PKG_BUILD_DIR)/
 
+	$(QQ)"$(MAKE)" -C $(PKG_BUILD_DIR)/ -f $(CURDIR)/Makefile.$@
+
+mpfs_hal:
+	$(QQ)"$(MAKE)" -C $(PKG_SOURCE_DIR)/mpfs_hal/common -f $(CURDIR)/Makefile.$@
