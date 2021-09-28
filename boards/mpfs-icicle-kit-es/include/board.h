@@ -34,13 +34,11 @@ extern "C" {
 #define LED2_PIN            GPIO_PIN(2, 18)
 #define LED3_PIN            GPIO_PIN(2, 19)
 
-/* GPIO2_LO->GPIO_SET_BITS |= (1 << 16);*/
 #define LED_PORT            GPIO2_LO
 #define LED0_MASK           (1 << 16)
 #define LED1_MASK           (1 << 17)
 #define LED2_MASK           (1 << 18)
 #define LED3_MASK           (1 << 19)
-
 
 #define LED0_ON             (LED_PORT->GPIO_SET_BITS = LED0_MASK)
 #define LED0_OFF            (LED_PORT->GPIO_CLR_BITS = LED0_MASK)
@@ -64,7 +62,9 @@ extern "C" {
  * @name SW0 (Button) pin definitions
  * @{
  */
-
+#define BTN0_PORT           0
+#define BTN0_PIN            GPIO_PIN(0, 30)
+#define BTN0_MODE           GPIO_IN_PU
 /** @} */
 
 /**

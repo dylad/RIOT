@@ -34,7 +34,16 @@ extern "C" {
  * @name    Timer peripheral configuration
  * @{
  */
+static const timer_conf_t timer_config[] = {
+    {   /* Timer 0 - System Clock */
+        .dev            = TIMER_LO ,
+        .num            = 1,
+    }
+};
 
+/* Timer 0 configuration */
+#define TIMER_0_CHANNELS    1
+#define TIMER_NUMOF         1u
 /** @} */
 
 /**
@@ -49,49 +58,6 @@ static const uart_conf_t uart_config[] = {
 };
 
 #define UART_NUMOF          ARRAY_SIZE(uart_config)
-
-/** @} */
-
-/**
- * @name PWM configuration
- * @{
- */
-
-/** @} */
-
-/**
- * @name    SPI configuration
- * @{
- */
-
-/** @} */
-
-/**
- * @name    I2C configuration
- * @{
- */
-
-/** @} */
-
-/**
- * @name    RTC configuration
- * @{
- */
-
-/** @} */
-
-/**
- * @name    RTT configuration
- * @{
- */
-
-/** @} */
-
-/**
- * @name ADC Configuration
- * @{
- */
-
 /** @} */
 
 #ifdef __cplusplus
