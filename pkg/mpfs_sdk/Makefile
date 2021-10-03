@@ -18,6 +18,7 @@ all: $(MPFS_MODULES)
 
 # First copy all needed files and gather them in a single place
 mpfs_sdk:
+	@mkdir -p $(PKG_BUILD_DIR)
 	@cp $(PKG_SOURCE_DIR)/drivers/mss/mss_gpio/mss_gpio.c $(PKG_BUILD_DIR)/
 	@cp $(PKG_SOURCE_DIR)/drivers/mss/mss_mmuart/mss_uart.c $(PKG_BUILD_DIR)/
 
