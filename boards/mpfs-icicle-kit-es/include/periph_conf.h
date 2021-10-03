@@ -50,10 +50,13 @@ static const timer_conf_t timer_config[] = {
  * @name    UART configuration
  * @{
  */
-#define MSS_UART1_LO_BASE           (MSS_UART_TypeDef*)0x20100000UL
+#define MSS_UART0_LO_BASE           (MSS_UART_TypeDef*)0x20000000UL
 static const uart_conf_t uart_config[] = {
     {    /* E51 UART */
-        .dev =  MSS_UART1_LO_BASE,
+        .dev = &g_mss_uart0_lo,
+        .base_addr =  MSS_UART0_LO_BASE,
+        .irqn = MMUART0_PLIC_77,
+        .clk = MSS_PERIPH_MMUART0,
     },
 };
 
