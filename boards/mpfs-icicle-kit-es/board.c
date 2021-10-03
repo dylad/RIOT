@@ -40,13 +40,13 @@ void board_init(void)
  */
 void led_init(void)
 {
-    gpio_init(LED0_PIN, 0);
-    gpio_init(LED1_PIN, 0);
-    gpio_init(LED2_PIN, 0);
-    gpio_init(LED3_PIN, 0);
+    gpio_init(LED0_PIN, GPIO_OUT);
+    gpio_init(LED1_PIN, GPIO_OUT);
+    gpio_init(LED2_PIN, GPIO_OUT);
+    gpio_init(LED3_PIN, GPIO_OUT);
 
-    LED0_ON;
-    LED1_ON;
-    LED2_ON;
-    LED3_ON;
+    LED0_OFF;
+    LED1_OFF;
+    LED2_OFF;
+    LED3_OFF;
 }
