@@ -70,6 +70,19 @@ typedef enum {
     GPIO_OD_PU = 0xff                   /**< not supported by HW */
 } gpio_mode_t;
 #endif
+
+/**
+ * @brief   Override active flank configuration values
+ * @{
+ */
+#define HAVE_GPIO_FLANK_T
+typedef enum {
+    GPIO_FALLING = MSS_GPIO_IRQ_EDGE_NEGATIVE,  /**< emit interrupt on falling flank */
+    GPIO_RISING = MSS_GPIO_IRQ_EDGE_POSITIVE,   /**< emit interrupt on rising flank */
+    GPIO_BOTH = MSS_GPIO_IRQ_EDGE_BOTH          /**< emit interrupt on both flanks */
+} gpio_flank_t;
+/** @} */
+
 #endif /* ndef DOXYGEN */
 
 /** @} */
@@ -83,7 +96,10 @@ typedef struct {
 } timer_conf_t;
 
 typedef struct {
-    MSS_UART_TypeDef *dev;       /**< pointer to the used UART device */
+    mss_uart_instance_t* dev;
+    MSS_UART_TypeDef *base_addr;
+    uint32_t irqn;
+    uint32_t clk;
 } uart_conf_t;
 
 #ifdef __cplusplus
