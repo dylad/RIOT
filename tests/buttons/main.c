@@ -44,13 +44,13 @@
 #if defined (BTN0_PIN) || defined (BTN1_PIN) || defined (BTN2_PIN) || defined (BTN3_PIN)
 static void cb(void *arg)
 {
-    printf("Pressed BTN%d\n", (int)arg);
+    printf("Pressed BTN%" PRIiPTR "\n", (uintptr_t)arg);
 }
 #endif
 
 int main(void)
 {
-    int cnt = 0;
+    uint8_t cnt = 0;
     /* get the number of available buttons and init interrupt handler */
 #ifdef BTN0_PIN
     if (gpio_init_int(BTN0_PIN, BTN0_MODE, BTN0_INT_FLANK, cb, (void *)cnt) < 0) {
@@ -88,7 +88,7 @@ int main(void)
         puts("[FAILED] no buttons available!");
         return 2;
     }
-    printf(" -- Available buttons: %i\n\n", cnt);
+    printf(" -- Available buttons: %d\n\n", cnt);
     puts(" -- Try pressing buttons to test.\n");
     puts("[SUCCESS]");
     return 0;
