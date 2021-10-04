@@ -15,17 +15,40 @@
  * @author          Dylan Laduranty <dylan.laduranty@mesotic.com>
  */
 
+#include <assert.h>
+#include <stdio.h>
+
 #include "cpu.h"
-#include "clic.h"
+#include "board.h"
+#include "plic.h"
 #include "periph_cpu.h"
 #include "periph/gpio.h"
 
+#ifdef MODULE_PERIPH_GPIO_IRQ
+/* Same as defined in mss_gpio.c */
+#define NB_OF_GPIO_INTR (41u)
+
+static gpio_isr_ctx_t gpio_config[NB_OF_GPIO_INTR];
+extern uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void);
+#endif /* MODULE_PERIPH_GPIO_IRQ */
 /**
  * @brief   Extract the port base address from the given pin identifier
  */
-static inline GPIO_TypeDef *_port(gpio_t pin)
+static  GPIO_TypeDef *_port(gpio_t pin)
 {
-    return (GPIO_TypeDef *)(GPIO0_LO + ((pin >> 5) << 12));
+    switch (pin >> 5)
+    {
+        case 0:
+            return GPIO0_LO;
+        case 1:
+            return GPIO1_LO;
+        case 2:
+            return GPIO2_LO;
+        
+        default:
+            assert(0);
+            return 0;
+    }
 }
 
 /**
@@ -34,7 +57,7 @@ static inline GPIO_TypeDef *_port(gpio_t pin)
  * The port number is extracted by looking at bits 10, 11, 12, 13 of the base
  * register addresses.
  */
-static inline int _port_num(gpio_t pin)
+static inline unsigned _port_num(gpio_t pin)
 {
     return (((pin >> 5) & 0xf));
 }
@@ -51,18 +74,15 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
 {
     GPIO_TypeDef *port = _port(pin);
     unsigned pin_num = _pin_num(pin);
-    
+
     port->GPIO_CFG[pin_num] = mode;
-  
+
     return 0;
 }
 
 void gpio_init_af(gpio_t pin, gpio_af_t af)
 {
-    GPIO_TypeDef *port = _port(pin);
-    unsigned pin_num = _pin_num(pin);
-    (void)pin_num;
-    (void)port;
+    (void)pin;
     (void)af;
 }
 
@@ -110,4 +130,84 @@ void gpio_write(gpio_t pin, int value)
     }
 }
 
+#ifdef MODULE_PERIPH_GPIO_IRQ
+
+static uint32_t _get_irq(gpio_t pin)
+{
+    uint32_t port_nb = _port_num(pin);
+    uint32_t irq_line;
+
+    switch (port_nb)
+    {
+        case 0: /* Fall-through */
+        case 2:
+            irq_line = GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0;
+            break;
+        case 1:
+            irq_line = GPIO1_BIT0_or_GPIO2_BIT14_PLIC_14;
+            break;
+        default:
+            assert(0);
+    }
+
+    irq_line += _pin_num(pin);
+
+    return irq_line;
+}
+
+uint8_t gpio1_bit16_or_gpio2_bit30_plic_30_IRQHandler(void)
+{
+    uint32_t ei_line = _get_irq(GPIO_PIN(2,30)) - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0;
+    LED3_TOGGLE;
+    MSS_GPIO_clear_irq(GPIO2_LO, MSS_GPIO_30);
+    gpio_config[ei_line].cb(gpio_config[ei_line].arg);
+    return EXT_IRQ_KEEP_ENABLED;
+}
+
+uint8_t  gpio1_bit17_or_gpio2_bit31_plic_31_IRQHandler(void)
+{
+    uint32_t ei_line = _get_irq(GPIO_PIN(2,31)) - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0;
+    LED0_TOGGLE;
+    MSS_GPIO_clear_irq(GPIO2_LO, MSS_GPIO_31);
+    gpio_config[ei_line].cb(gpio_config[ei_line].arg);
+    return EXT_IRQ_KEEP_ENABLED;
+}
+
+int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
+                  gpio_cb_t cb, void *arg)
+{
+    GPIO_TypeDef *port = _port(pin);
+    unsigned pin_num = _pin_num(pin);
+    printf("port:%p, pin:%d\n", port, pin_num);
+    printf("cb:%p\n", cb);
+    /* Get external interrupt line */
+    uint32_t ei_line = _get_irq(pin);
+    printf("eiline:%d\n", ei_line - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0);
+    /* Store callback and argument */
+    gpio_config[ei_line - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0].cb = cb;
+    gpio_config[ei_line - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0].arg = arg;
+    /* Configure GPIO as interrupt */
+    MSS_GPIO_config(port, pin_num, mode | flank);
+
+    plic_set_isr_cb(ei_line, ext_irq_handler_table[ei_line]);
+
+    MSS_GPIO_enable_irq(port, pin_num);
+
+    plic_set_priority(ei_line, 2);
+
+    plic_enable_interrupt(ei_line);
+
+    return 0;
+}
+
+void gpio_irq_enable(gpio_t pin)
+{
+    (void)pin;
+}
+void gpio_irq_disable(gpio_t pin)
+{
+    (void)pin;
+}
+
+#endif /* MODULE_PERIPH_GPIO_IRQ */
 /** @} */

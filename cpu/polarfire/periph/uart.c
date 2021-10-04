@@ -24,6 +24,7 @@
 #include "periph_cpu.h"
 #include "periph/gpio.h"
 #include "periph/uart.h"
+#include "plic.h"
 
 #define ENABLE_DEBUG 0
 #include "debug.h"
@@ -40,47 +41,58 @@ static uart_isr_ctx_t uart_ctx[UART_NUMOF];
  *
  * @return              base register address
  */
-static inline MSS_UART_TypeDef *dev(uart_t dev)
+static inline mss_uart_instance_t *dev(uart_t dev)
 {
     return uart_config[dev].dev;
 }
 
-void rx_handler(mss_uart_instance_t* this_uart)
+static inline MSS_UART_TypeDef *base_addr(uart_t dev)
 {
-    (void)this_uart;
-    uint8_t byte;
+    return uart_config[dev].base_addr;
+}
 
-    LED3_OFF;
-    MSS_UART_get_rx(&g_mss_uart0_lo, &byte, 1);
+extern uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void);
+
+static void _uart_0_isr(mss_uart_instance_t* this_uart)
+{
+    uint8_t byte;
+    MSS_UART_get_rx(this_uart, &byte, 1);
     uart_ctx[0].rx_cb(uart_ctx[0].arg, byte);
 }
 
+void (*_local_handler[UART_NUMOF])(mss_uart_instance_t* this_uart) = 
+{
+    _uart_0_isr,
+};
+
 int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 {
-    (void) baudrate;
-    (void) uart;
-    LED0_OFF;
-    mss_config_clk_rst(MSS_PERIPH_MMUART0, (uint8_t) MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
+    mss_config_clk_rst(uart_config[uart].clk, MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
 
-    MSS_UART_init(&g_mss_uart0_lo, MSS_UART_115200_BAUD,
+    MSS_UART_init(dev(uart), baudrate,
                   MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
 
     if (rx_cb) {
-        LED1_OFF;
-        uart_ctx[0].rx_cb = rx_cb;
-        uart_ctx[0].arg = arg;
-        MSS_UART_set_rx_handler(&g_mss_uart0_lo, rx_handler, MSS_UART_FIFO_SINGLE_BYTE);
-        MSS_UART_enable_local_irq(&g_mss_uart0_lo);
+        uart_ctx[uart].rx_cb = rx_cb;
+        uart_ctx[uart].arg = arg;
+        plic_set_isr_cb(uart_config[uart].irqn, ext_irq_handler_table[uart_config[uart].irqn]);
+        plic_set_priority(uart_config[uart].irqn, 2);
+
+        MSS_UART_set_rx_handler(dev(uart), _local_handler[uart], MSS_UART_FIFO_SINGLE_BYTE);
+        /* Set IRQ trigger level, write directly as register is Write Only */
+        //base_addr(uart)->FCR = MSS_UART_FIFO_SINGLE_BYTE;
+        /* Enable Receive data interrupt */
+        base_addr(uart)->IER = MSS_UART_RBF_IRQ;
+        /* Enable PLIC irq */
+        PLIC_EnableIRQ(uart_config[uart].irqn);
+        //plic_enable_interrupt(uart_config[uart].irqn);
     }
-    LED2_OFF;
     return UART_OK;
 }
 
 void uart_write(uart_t uart, const uint8_t *data, size_t len)
 {
-    (void)uart;
-
-    MSS_UART_polled_tx(&g_mss_uart0_lo, data, len);
+    MSS_UART_polled_tx(dev(uart), data, len);
 }
 
 void uart_poweron(uart_t uart)
@@ -91,10 +103,4 @@ void uart_poweron(uart_t uart)
 void uart_poweroff(uart_t uart)
 {
     (void)uart;
-}
-
-void uart_isr(int num)
-{
-    (void)num;
-    LED3_OFF;
 }
