@@ -29,7 +29,7 @@ extern "C" {
  *
  * @param   irq     Interrupt number
  */
-typedef void (*plic_isr_cb_t)(int irq);
+typedef uint8_t (*plic_isr_cb_t)(void);
 
 /**
  * @brief Initialize the Platform-level interrupt controller
