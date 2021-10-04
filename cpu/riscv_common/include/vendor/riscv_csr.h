@@ -23,12 +23,14 @@
 #define RISCV_CSR_H
 
 /* Some things missing from the official encoding.h */
+#ifndef USE_OWN_CSR_REG
 #ifndef MCAUSE_INT
 #define MCAUSE_INT         0x80000000
 #endif
 
 #ifndef MCAUSE_CAUSE
 #define MCAUSE_CAUSE       0x7FFFFFFF
+#endif
 #endif
 
 #define MSTATUS_UIE         0x00000001
@@ -84,6 +86,7 @@
 #define DCSR_CAUSE_STEP     4
 #define DCSR_CAUSE_HALT     5
 
+#ifndef USE_OWN_CSR_REG
 #define MCONTROL_TYPE(xlen)    (0xfULL<<((xlen)-4))
 #define MCONTROL_DMODE(xlen)   (1ULL<<((xlen)-5))
 #define MCONTROL_MASKMAX(xlen) (0x3fULL<<((xlen)-11))
@@ -135,6 +138,7 @@
 #ifndef MCONTROL_LOAD
 #define MCONTROL_LOAD       (1<<0)
 #endif
+#endif
 
 #define MCONTROL_TYPE_NONE      0
 #define MCONTROL_TYPE_MATCH     2
@@ -152,6 +156,7 @@
 #define MCONTROL_MATCH_MASK_LOW  4
 #define MCONTROL_MATCH_MASK_HIGH 5
 
+#ifndef USE_OWN_CSR_REG
 #ifndef MIP_SSIP
 #define MIP_SSIP            (1 << IRQ_S_SOFT)
 #endif
@@ -186,6 +191,7 @@
 
 #ifndef MIP_MEIP
 #define MIP_MEIP            (1 << IRQ_M_EXT)
+#endif
 #endif
 
 #define SIP_SSIP MIP_SSIP
@@ -239,6 +245,7 @@
 
 #ifdef __riscv
 
+#ifndef USE_OWN_CSR_REG
 #ifdef __riscv64
 # define MSTATUS_SD MSTATUS64_SD
 # define SSTATUS_SD SSTATUS64_SD
@@ -256,7 +263,7 @@
 #endif
 #define RISCV_PGSHIFT 12
 #define RISCV_PGSIZE (1 << RISCV_PGSHIFT)
-
+#endif
 #ifndef __ASSEMBLER__
 
 #ifdef __GNUC__
