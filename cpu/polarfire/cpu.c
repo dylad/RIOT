@@ -30,12 +30,12 @@ void cpu_init(void)
     /* Common RISC-V initialization */
     riscv_init();
 
-    /* Turn on clock */
-    SYSREG->SUBBLK_CLOCK_CR |= (1 << 22);
-    /* Remove soft reset */
-    SYSREG->SOFT_RESET_CR   &= (uint32_t)~(1 << 22);
-
     mss_config_clk_rst(MSS_PERIPH_CFM, (uint8_t) MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
+
+    /* Initialize all GPIOs banks */
+    mss_config_clk_rst(MSS_PERIPH_GPIO0, (uint8_t) MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
+    mss_config_clk_rst(MSS_PERIPH_GPIO1, (uint8_t) MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
+    mss_config_clk_rst(MSS_PERIPH_GPIO2, (uint8_t) MPFS_HAL_FIRST_HART, PERIPHERAL_ON);
 
     SYSREG->GPIO_INTERRUPT_FAB_CR = 0xFFFFFFFFUL;
 
