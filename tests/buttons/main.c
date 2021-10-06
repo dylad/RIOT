@@ -50,31 +50,31 @@ static void cb(void *arg)
 
 int main(void)
 {
-    uint8_t cnt = 0;
+    unsigned cnt = 0;
     /* get the number of available buttons and init interrupt handler */
 #ifdef BTN0_PIN
-    if (gpio_init_int(BTN0_PIN, BTN0_MODE, BTN0_INT_FLANK, cb, (void *)cnt) < 0) {
+    if (gpio_init_int(BTN0_PIN, BTN0_MODE, BTN0_INT_FLANK, cb, (void*)(uintptr_t)cnt) < 0) {
         puts("[FAILED] init BTN0!");
         return 1;
     }
     ++cnt;
 #endif
 #ifdef BTN1_PIN
-    if (gpio_init_int(BTN1_PIN, BTN1_MODE, BTN1_INT_FLANK, cb, (void *)cnt) < 0) {
+    if (gpio_init_int(BTN1_PIN, BTN1_MODE, BTN1_INT_FLANK, cb, (void*)(uintptr_t)cnt) < 0) {
         puts("[FAILED] init BTN1!");
         return 1;
     }
     ++cnt;
 #endif
 #ifdef BTN2_PIN
-    if (gpio_init_int(BTN2_PIN, BTN2_MODE, BTN2_INT_FLANK, cb, (void *)cnt) < 0) {
+    if (gpio_init_int(BTN2_PIN, BTN2_MODE, BTN2_INT_FLANK, cb, (void*)(uintptr_t)cnt) < 0) {
         puts("[FAILED] init BTN2!");
         return 1;
     }
     ++cnt;
 #endif
 #ifdef BTN3_PIN
-    if (gpio_init_int(BTN3_PIN, BTN3_MODE, BTN3_INT_FLANK, cb, (void *)cnt) < 0) {
+    if (gpio_init_int(BTN3_PIN, BTN3_MODE, BTN3_INT_FLANK, cb, (void*)(uintptr_t)cnt) < 0) {
         puts("[FAILED] init BTN3!");
         return 1;
     }
