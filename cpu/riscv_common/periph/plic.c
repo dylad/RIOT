@@ -126,6 +126,6 @@ void plic_isr_handler(void)
     unsigned irq = plic_claim_interrupt();
 
     /* Don't check here, just crash hard if no handler is available */
-    _ext_isrs[irq]();
+    _ext_isrs[irq](irq);
     plic_complete_interrupt(irq);
 }
