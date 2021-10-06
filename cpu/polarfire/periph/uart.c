@@ -51,19 +51,36 @@ static inline MSS_UART_TypeDef *base_addr(uart_t dev)
     return uart_config[dev].base_addr;
 }
 
-extern uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void);
-
-static void _uart_0_isr(mss_uart_instance_t* this_uart)
+static void _uart_isr(mss_uart_instance_t* this_uart, unsigned uartn)
 {
     uint8_t byte;
     MSS_UART_get_rx(this_uart, &byte, 1);
-    uart_ctx[0].rx_cb(uart_ctx[0].arg, byte);
+    uart_ctx[uartn].rx_cb(uart_ctx[uartn].arg, byte);
 }
 
-void (*_local_handler[UART_NUMOF])(mss_uart_instance_t* this_uart) = 
+void uart_isr(int num)
 {
-    _uart_0_isr,
-};
+    switch (num) {
+        case MMUART0_PLIC_77:
+            _uart_isr(&g_mss_uart0_lo, 0);
+            break;
+        case MMUART1_PLIC:
+            _uart_isr(&g_mss_uart1_lo, 1);
+            break;
+        case MMUART2_PLIC:
+            _uart_isr(&g_mss_uart2_lo, 2);
+            break;
+        case MMUART3_PLIC:
+            _uart_isr(&g_mss_uart3_lo, 3);
+            break;
+        case MMUART4_PLIC:
+            _uart_isr(&g_mss_uart4_lo, 4);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+}
 
 int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 {
@@ -75,17 +92,15 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
     if (rx_cb) {
         uart_ctx[uart].rx_cb = rx_cb;
         uart_ctx[uart].arg = arg;
-        plic_set_isr_cb(uart_config[uart].irqn, ext_irq_handler_table[uart_config[uart].irqn]);
+        plic_set_isr_cb(uart_config[uart].irqn, uart_isr);
         plic_set_priority(uart_config[uart].irqn, 2);
 
-        MSS_UART_set_rx_handler(dev(uart), _local_handler[uart], MSS_UART_FIFO_SINGLE_BYTE);
         /* Set IRQ trigger level, write directly as register is Write Only */
-        //base_addr(uart)->FCR = MSS_UART_FIFO_SINGLE_BYTE;
+        base_addr(uart)->FCR = MSS_UART_FIFO_SINGLE_BYTE;
         /* Enable Receive data interrupt */
         base_addr(uart)->IER = MSS_UART_RBF_IRQ;
         /* Enable PLIC irq */
-        PLIC_EnableIRQ(uart_config[uart].irqn);
-        //plic_enable_interrupt(uart_config[uart].irqn);
+        plic_enable_interrupt(uart_config[uart].irqn);
     }
     return UART_OK;
 }

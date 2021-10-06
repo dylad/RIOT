@@ -29,7 +29,6 @@
 #define NB_OF_GPIO_INTR (41u)
 
 static gpio_isr_ctx_t gpio_config[NB_OF_GPIO_INTR];
-extern uint8_t (*ext_irq_handler_table[PLIC_NUM_SOURCES])(void);
 #endif /* MODULE_PERIPH_GPIO_IRQ */
 /**
  * @brief   Extract the port base address from the given pin identifier
@@ -155,22 +154,28 @@ static uint32_t _get_irq(gpio_t pin)
     return irq_line;
 }
 
-uint8_t gpio1_bit16_or_gpio2_bit30_plic_30_IRQHandler(void)
+void gpio_isr(int irq)
 {
-    uint32_t ei_line = _get_irq(GPIO_PIN(2,30)) - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0;
-    LED3_TOGGLE;
-    MSS_GPIO_clear_irq(GPIO2_LO, MSS_GPIO_30);
-    gpio_config[ei_line].cb(gpio_config[ei_line].arg);
-    return EXT_IRQ_KEEP_ENABLED;
-}
+    uint32_t ei_line = irq - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0;
 
-uint8_t  gpio1_bit17_or_gpio2_bit31_plic_31_IRQHandler(void)
-{
-    uint32_t ei_line = _get_irq(GPIO_PIN(2,31)) - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0;
-    LED0_TOGGLE;
-    MSS_GPIO_clear_irq(GPIO2_LO, MSS_GPIO_31);
+    /* As IRQ is shared between GPIO0/GPIO1 & GPIO2 bank,
+       check which bank was used to clear the IRQ */
+    if ((SYSREG->GPIO_INTERRUPT_FAB_CR & 1 << ei_line) &&
+        (ei_line <= GPIO1_BIT17_or_GPIO2_BIT31_PLIC_31))
+    {
+        /* GPIO IRQ are routed to FPGA Fabric so GPIO bank 2 */
+        MSS_GPIO_clear_irq(GPIO2_LO, ei_line);
+
+    } else {
+        if (ei_line < GPIO1_BIT0_or_GPIO2_BIT14_PLIC_14) {
+            MSS_GPIO_clear_irq(GPIO0_LO, ei_line);
+        } else {
+            MSS_GPIO_clear_irq(GPIO1_LO, ei_line - GPIO1_BIT0_or_GPIO2_BIT14_PLIC_14);
+        }
+    }
+
+    /* callback to user defined function */
     gpio_config[ei_line].cb(gpio_config[ei_line].arg);
-    return EXT_IRQ_KEEP_ENABLED;
 }
 
 int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
@@ -178,18 +183,15 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
 {
     GPIO_TypeDef *port = _port(pin);
     unsigned pin_num = _pin_num(pin);
-    printf("port:%p, pin:%d\n", port, pin_num);
-    printf("cb:%p\n", cb);
     /* Get external interrupt line */
     uint32_t ei_line = _get_irq(pin);
-    printf("eiline:%d\n", ei_line - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0);
     /* Store callback and argument */
     gpio_config[ei_line - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0].cb = cb;
     gpio_config[ei_line - GPIO0_BIT0_or_GPIO2_BIT0_PLIC_0].arg = arg;
     /* Configure GPIO as interrupt */
     MSS_GPIO_config(port, pin_num, mode | flank);
 
-    plic_set_isr_cb(ei_line, ext_irq_handler_table[ei_line]);
+    plic_set_isr_cb(ei_line, gpio_isr);
 
     MSS_GPIO_enable_irq(port, pin_num);
 
