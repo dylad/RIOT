@@ -87,6 +87,7 @@ typedef enum {
 
 /** @} */
 
+#define PERIPH_TIMER_PROVIDES_SET
 /**
  * @brief   Timer device configuration
  */
