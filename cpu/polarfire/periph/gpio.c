@@ -204,11 +204,17 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
 
 void gpio_irq_enable(gpio_t pin)
 {
-    (void)pin;
+    GPIO_TypeDef *port = _port(pin);
+    unsigned pin_num = _pin_num(pin);
+
+    MSS_GPIO_enable_irq(port, pin_num);
 }
 void gpio_irq_disable(gpio_t pin)
 {
-    (void)pin;
+    GPIO_TypeDef *port = _port(pin);
+    unsigned pin_num = _pin_num(pin);
+
+    MSS_GPIO_disable_irq(port, pin_num);
 }
 
 #endif /* MODULE_PERIPH_GPIO_IRQ */
