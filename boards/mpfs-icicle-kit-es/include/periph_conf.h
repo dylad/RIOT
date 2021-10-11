@@ -36,14 +36,18 @@ extern "C" {
  */
 static const timer_conf_t timer_config[] = {
     {   /* Timer 0 - System Clock */
-        .dev            = TIMER_LO ,
+        .dev            = TIMER_LO,
         .num            = 1,
+    },
+    {   /* Timer 0 - System Clock */
+        .dev            = TIMER_LO,
+        .num            = 2,
     }
 };
 
 /* Timer 0 configuration */
-#define TIMER_0_CHANNELS    1
-#define TIMER_NUMOF         1u
+#define TIMER_0_CHANNELS    1u
+#define TIMER_NUMOF         2u
 /** @} */
 
 /**
