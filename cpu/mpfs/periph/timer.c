@@ -8,7 +8,7 @@
  */
 
 /**
- * @ingroup     cpu_polarfire
+ * @ingroup     cpu_mpfs
  * @ingroup     drivers_periph_timer
  * @{
  *

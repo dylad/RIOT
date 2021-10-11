@@ -5,7 +5,7 @@ PKG_LICENSE=MIT
 
 include $(RIOTBASE)/pkg/pkg.mk
 
-ifneq ($(CPU),polarfire)
+ifneq ($(CPU),mpfs)
   $(error This package can only be used with MPFS CPUs)
 endif
 

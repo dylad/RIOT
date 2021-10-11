@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup         cpu_polarfire
+ * @ingroup         cpu_mpfs
  * @{
  *
  * @file

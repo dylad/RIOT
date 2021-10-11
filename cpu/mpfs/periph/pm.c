@@ -7,7 +7,7 @@
  */
 
 /**
- * @ingroup     cpu_polarfire
+ * @ingroup     cpu_mpfs
  * @{
  *
  * @brief       Implementation of the CPU power management for Polarfire CPU
