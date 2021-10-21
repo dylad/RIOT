@@ -1,0 +1,6 @@
+USEMODULE += contrib_nrf_modem
+
+USEPKG += tlsf
+USEMODULE += sema
+USEMODULE += ztimer
+USEMODULE += ztimer_msec
