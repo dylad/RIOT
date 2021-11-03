@@ -5,3 +5,8 @@ LINKFLAGS += -L$(RIOTBASE)/build/pkg/nrf_modem/nrf_modem/lib/cortex-m33/soft-flo
 LINKFLAGS += -lmodem
 
 DIRS += $(RIOTPKG)/nrf_modem/contrib
+
+
+ifneq (,$(filter nrf_modem_netdev,$(USEMODULE)))
+  DIRS += $(RIOTBASE)/pkg/nrf_modem/contrib/netdev
+endif

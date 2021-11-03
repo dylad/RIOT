@@ -4,3 +4,17 @@ USEPKG += tlsf
 USEMODULE += sema
 USEMODULE += ztimer
 USEMODULE += ztimer_msec
+
+DEFAULT_MODULE += auto_init_nrf_modem
+USEMODULE += nrf_modem_netdev
+USEMODULE += netdev
+USEMODULE += netif
+
+ifneq (,$(filter nrf_modem_ipv4,$(USEMODULE)))
+  USEMODULE += ipv4
+endif
+
+ifneq (,$(filter ned_modem_ipv6,$(USEMODULE)))
+  USEMODULE += ipv6
+  USEMODULE += random
+endif
