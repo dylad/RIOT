@@ -28,6 +28,40 @@ enum {
     IHEX_START_ADDR,
 };
 
+#ifndef RIOTBOOT_SERIAL_TRANSFER_SIZE
+#define RIOTBOOT_SERIAL_TRANSFER_SIZE 128
+#endif /* RIOTBOOT_SERIAL_TRANSFER_SIZE */
+
+#define RIOTBOOT_SERIAL_CMD_SIZE 7
+
+__attribute__ ((aligned(4)))
+static union {
+    uint8_t u8[RIOTBOOT_SERIAL_TRANSFER_SIZE+7]; /* Frame buffer */
+    struct __attribute__ ((packed)) {
+        uint8_t type;       /* Command type */
+        uint8_t len;        /* Length of data (without checksum) */
+        uint32_t addr;      /* Address of the data packet */
+        uint8_t data[RIOTBOOT_SERIAL_TRANSFER_SIZE];     /* data buffer  */
+        uint8_t crc;        /* Checksum byte */
+    } buf;
+} w_cmd;
+
+typedef struct {
+    union {
+        uint8_t u8[RIOTBOOT_SERIAL_CMD_SIZE];
+        struct __attribute__ ((packed)) {
+            uint8_t type;   /* Command type */
+            uint8_t len;    /* Length of data (without checksum) */
+            uint32_t val;   /* Command data */
+            uint8_t crc;    /* Checksum byte */
+        } buf;
+    };
+} riotboot_serial_cmd_t;
+
+uint16_t loffset = 0;
+uint32_t laddr = 0;
+uint32_t fw_end_address;
+
 static uint8_t crc8(const uint8_t *data, size_t len,
                     uint8_t g_polynom, uint8_t crc)
 {
@@ -62,17 +96,6 @@ static int _put_char(int fd, char c)
     return write(fd, &c, 1);
 }
 
-static int _write_crc(int fd, const void *buf, size_t count, uint8_t *crc)
-{
-    *crc = crc8(buf, count, RIOTBOOT_CRC8_POLY, *crc);
-    return write(fd, buf, count);
-}
-
-static int _write_crc_byte(int fd, uint8_t byte, uint8_t *crc)
-{
-    return _write_crc(fd, &byte, 1, crc);
-}
-
 static int _get_result(int fd)
 {
     while (1) {
@@ -98,24 +121,14 @@ static int _get_result(int fd)
 
 static int cmd_erase(int fd, uint32_t sector)
 {
-    uint8_t crc = 0xFF;
-    _write_crc_byte(fd, RIOTBOOT_CMD_ERASE, &crc);
-    _write_crc_byte(fd, sizeof(sector), &crc);
-    _write_crc(fd, &sector, sizeof(sector), &crc);
-    write(fd, &crc, 1);
 
-    return _get_result(fd);
-}
+    riotboot_serial_cmd_t page_cmd;
 
-__attribute__((unused))
-static int cmd_write(int fd, uint32_t addr, const void *data, size_t len)
-{
-    uint8_t crc = 0xFF;
-    _write_crc_byte(fd, RIOTBOOT_CMD_WRITE, &crc);
-    _write_crc_byte(fd, sizeof(addr) + len, &crc);
-    _write_crc(fd, &addr, sizeof(addr), &crc);
-    _write_crc(fd, data, len, &crc);
-    write(fd, &crc, 1);
+    page_cmd.buf.type =  RIOTBOOT_CMD_ERASE;
+    page_cmd.buf.len = sizeof(sector);
+    page_cmd.buf.val = sector;
+    page_cmd.buf.crc = crc8(page_cmd.u8, 6, RIOTBOOT_CRC8_POLY, 0xFF);
+    write(fd, page_cmd.u8, RIOTBOOT_SERIAL_CMD_SIZE);
 
     return _get_result(fd);
 }
@@ -129,12 +142,13 @@ static int cmd_boot(int fd)
 
 static uint32_t _get_page(int fd, uint32_t addr)
 {
+    riotboot_serial_cmd_t page_cmd;
     do {
-        uint8_t crc = 0xFF;
-        _write_crc_byte(fd, RIOTBOOT_CMD_GET_PAGE, &crc);
-        _write_crc_byte(fd, sizeof(addr), &crc);
-        _write_crc(fd, &addr, sizeof(addr), &crc);
-        write(fd, &crc, 1);
+        page_cmd.buf.type =  RIOTBOOT_CMD_GET_PAGE;
+        page_cmd.buf.len = sizeof(addr);
+        page_cmd.buf.val = addr;
+        page_cmd.buf.crc = crc8(page_cmd.u8, 6, RIOTBOOT_CRC8_POLY, 0xFF);
+        write(fd, page_cmd.u8, RIOTBOOT_SERIAL_CMD_SIZE);
 
     } while (_get_result(fd) > 1);
 
@@ -182,22 +196,45 @@ static unsigned _hex_to_int(const char *s, size_t len)
 static int _write_out(void *ctx, uint32_t addr, uint8_t len, const char *s)
 {
     int fd = *(int*)ctx;
+    bool end_xfer = false;
 
-    printf("0x%x: %u bytes ", addr, len);
-
-    uint8_t crc = 0xFF;
-    _write_crc_byte(fd, RIOTBOOT_CMD_WRITE, &crc);
-    _write_crc_byte(fd, sizeof(addr) + len, &crc);
-    _write_crc(fd, &addr, sizeof(addr), &crc);
-
-    while (len--) {
-        uint8_t byte = _hex_to_int(s, 2);
-        _write_crc_byte(fd, byte, &crc);
-        s += 2;
+    printf("0x%x: %u bytes\r", addr, len);
+    if (loffset == 0) {
+        laddr = addr;
+        if (addr + len  == fw_end_address) {
+            /* Don't have more bytes in firmware, end transfer now */
+            end_xfer = true;
+        }
+    }
+    /* Workaround if for some reason, hex file line contains less than 16 bytes
+       of data, end transfer now, so we don't have alignment issue while
+       preparing a new buffer of data to flash */
+    if (len < 16) {
+        end_xfer = true;
     }
 
-    write(fd, &crc, 1);
+    for (unsigned cpt=0; cpt<len; cpt++) {
+        w_cmd.u8[6+loffset+cpt] = _hex_to_int(s, 2);
+        s += 2;
+    }
+    loffset += len;
 
+    if (loffset < RIOTBOOT_SERIAL_TRANSFER_SIZE && !end_xfer) {
+        return 0;
+    }
+
+    w_cmd.buf.type = RIOTBOOT_CMD_WRITE;
+    w_cmd.buf.len = sizeof(laddr) + loffset;
+    w_cmd.buf.addr = laddr;
+
+    /* If packet is smaller than RIOTBOOT_SERIAL_TRANSFER_SIZE, place CRC in
+       first available byte instead at the end */
+    w_cmd.u8[loffset+6] = crc8(w_cmd.u8, loffset+6, RIOTBOOT_CRC8_POLY, 0xFF);
+    write(fd, w_cmd.u8, loffset+7);
+
+    loffset = 0;
+    laddr = 0;
+    end_xfer = false;
     return _get_result(fd);
 }
 
@@ -308,6 +345,8 @@ int main(int argc, char** argv)
     printf("%u byte firmware (0x%x - 0x%x)\n",
            min_max[1] - min_max[0], min_max[0], min_max[1]);
 
+    /* Store Firmware end address */
+    fw_end_address = min_max[1];
     int fd = serial_open(argc - 2, &argv[2]);
 
     if (fd < 0) {
