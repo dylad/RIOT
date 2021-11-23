@@ -43,7 +43,7 @@
 #define RIOTBOOT_DELAY_MS       (1000)
 #endif
 
-#define RX_BUF_LEN              (40)
+#define RX_BUF_LEN              (256)
 
 /* we send a characters each iteration -> 8 bit + start & stop bit */
 #define RIOTBOOT_DELAY (RIOTBOOT_DELAY_MS * RIOTBOOT_UART_BAUDRATE / 10000)
