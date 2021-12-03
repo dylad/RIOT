@@ -27,11 +27,19 @@
 
 /* get the IRQ configuration */
 #if (RTT_DEV == 1)
+#ifdef NRF_RTC1_S
+#define DEV             NRF_RTC1_S
+#else
 #define DEV             NRF_RTC1
+#endif
 #define ISR             isr_rtc1
 #define IRQn            RTC1_IRQn
 #elif (RTT_DEV == 2)
+#ifdef NRF_RTC2_S
+#define DEV             NRF_RTC2_S
+#else
 #define DEV             NRF_RTC2
+#endif
 #define ISR             isr_rtc2
 #define IRQn            RTC2_IRQn
 #else
