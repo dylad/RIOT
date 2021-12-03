@@ -47,6 +47,11 @@ static wdt_cb_t wdt_cb;
 static void *wdt_arg;
 #endif
 
+/* Wrap name for compatibily */
+#ifdef NRF_WDT_S
+#define NRF_WDT NRF_WDT_S
+#endif
+
 void wdt_start(void)
 {
     DEBUG("[wdt] start watchdog\n");
@@ -62,7 +67,11 @@ void wdt_stop(void)
 
 void wdt_kick(void)
 {
+#ifdef WDT_RUNSTATUS_RUNSTATUSWDT_Running
+    assert(NRF_WDT->RUNSTATUS == WDT_RUNSTATUS_RUNSTATUSWDT_Running);
+#else
     assert(NRF_WDT->RUNSTATUS == WDT_RUNSTATUS_RUNSTATUS_Running);
+#endif
 
     DEBUG("[wdt] reload the watchdog\n");
 
