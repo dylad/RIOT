@@ -24,7 +24,7 @@
 #include "utlist.h"
 #include "thread.h"
 
-#define ENABLE_DEBUG                0
+#define ENABLE_DEBUG                1
 #include "debug.h"
 
 #define NRF_MODEM_NETDEV_NAME            "nrf_modem_netdev"
@@ -60,6 +60,7 @@ int nrf_modem_netdev_init(void)
 static void *_event_loop(void *arg)
 {
     (void)arg;
+    DEBUG_PUTS("\n[netdev_thread]: Starting thread...");
     msg_init_queue(_queue, NRF_MODEM_NETDEV_QUEUE_LEN);
     while (1) {
         msg_t msg;

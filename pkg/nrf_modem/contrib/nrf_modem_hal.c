@@ -27,7 +27,7 @@
 #include <errno.h>
 
 /* RIOT-OS specific headers */
-#include "nrf_modem_riot.h"
+#include "nrf_modem_hal.h"
 #include "cpu.h"
 
 /* nRF Modem relies on Nordic SDK for IPC management, thus emulates it somehow */

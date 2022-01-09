@@ -1,5 +1,5 @@
 INCLUDES += -I$(BUILD_DIR)/pkg/nrf_modem/nrf_modem/include
-INCLUDES += -I$(RIOTPKG)/nrf_modem/contrib
+INCLUDES += -I$(RIOTPKG)/nrf_modem/include
 
 LINKFLAGS += -L$(RIOTBASE)/build/pkg/nrf_modem/nrf_modem/lib/cortex-m33/soft-float
 LINKFLAGS += -lmodem

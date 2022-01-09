@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Mesotic SAS
+ * Copyright (C) 2021-2022 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef NRF_MODEM_RIOT_H
-#define NRF_MODEM_RIOT_H
+#ifndef NRF_MODEM_HAL_H
+#define NRF_MODEM_HAL_H
 
 #include "cpu.h"
 #ifdef __cplusplus
@@ -67,7 +67,6 @@ typedef enum {
     /**< TWI error: Data not acknowledged. */
     NRFX_ERROR_DRV_TWI_ERR_DNACK    = (NRFX_ERROR_DRIVERS_BASE_NUM + 2)
 } nrfx_err_t;
-/** @} */
 
 /**
  * @brief IPC driver handler type.
@@ -91,5 +90,5 @@ typedef struct {
 }
 #endif
 
-#endif /* NRF_MODEM_RIOT_H */
+#endif /* NRF_MODEM_HAL_H */
 /** @} */

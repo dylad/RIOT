@@ -29,7 +29,6 @@
 #include "shell.h"
 #include "shell_commands.h"
 #include "thread.h"
-#include "tlsf.h"
 #include "ztimer.h"
 #include "ztimer/periodic.h"
 
@@ -44,45 +43,13 @@
 
 #define LED_BLINK_DELAY 500 /* ms */
 #define CONFIG_GNSS_MSG_QUEUE 8
-#define CONFIG_SHMEM_SIZE 8192 /* bytes */
-
-/* Declare static shared memory buffer for communication between
-   nRF9160 MCU and its modem, enforce alignment */
-static uint8_t tx[CONFIG_SHMEM_SIZE]    __attribute__((aligned(32)));
-static uint8_t rx[CONFIG_SHMEM_SIZE]    __attribute__((aligned(32)));
-static uint8_t ctrl[CONFIG_SHMEM_SIZE]  __attribute__((aligned(32)));
-#ifdef CONFIG_NRF_MODEM_TRACE
-static uint8_t trace[CONFIG_SHMEM_SIZE] __attribute__((aligned(32)));
-#endif
 
 char gnss_stack[THREAD_STACKSIZE_MAIN];
 kernel_pid_t gnss_pid = KERNEL_PID_UNDEF;
 
-tlsf_t tlsf;
 struct nrf_modem_gnss_nmea_data_frame nmea_data;
 
-static const nrf_modem_init_params_t init_params = {
-    .ipc_irq_prio = 6,
-    .shmem.ctrl = {
-        .base = (uint32_t)ctrl,
-        .size = CONFIG_SHMEM_SIZE,
-    },
-    .shmem.tx = {
-        .base = (uint32_t)tx,
-        .size = CONFIG_SHMEM_SIZE,
-    },
-    .shmem.rx = {
-        .base = (uint32_t)rx,
-        .size = CONFIG_SHMEM_SIZE,
-    },
-#ifdef CONFIG_NRF_MODEM_TRACE
-    .shmem.trace = {
-        .base = (uint32_t)trace,
-        .size = CONFIG_SHMEM_SIZE,
-    },
-#endif
-};
-
+#if 0
 static const char *const at_commands[] = {
     "AT\%XSYSTEMMODE=0,0,1,0",      /* Enable GNSS service */
     "AT\%XCOEX0=1,1,1565,1586",     /* Set Coexistence parameters */
@@ -108,6 +75,7 @@ int setup_modem(void)
 
     return 0;
 }
+#endif
 
 static int _led_blink(void* arg)
 {
@@ -282,30 +250,7 @@ static const shell_command_t shell_commands[] = {
 
 int main(void)
 {
-    int ret;
     puts("nRF modem test application\n");
-
-    /* Create a pool with TX buffer as nRF modem library need to malloc
-       some data from it */
-    tlsf = tlsf_create_with_pool(tx, CONFIG_SHMEM_SIZE);
-    /* Add some delay before initialize nRF modem lib */
-    ztimer_sleep(ZTIMER_MSEC, 50);
-    /* Initialize Modem librairy */
-    ret = nrf_modem_init(&init_params, NORMAL_MODE);
-
-    if (ret != 0) {
-        puts("nRF modem library init failed");
-        return ret;
-    }
-    puts("nRF modem libray initialized");
-
-    /* Setup modem with default parameters */
-    if (setup_modem() != 0) {
-        puts("setup modem failed");
-        return -1;
-    } else {
-        puts ("setup modem OK");
-    }
 
     /* Create GNSS thread */
     gnss_pid = thread_create(gnss_stack, sizeof(gnss_stack),
