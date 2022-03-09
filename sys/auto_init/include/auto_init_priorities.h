@@ -395,6 +395,12 @@ extern "C" {
  */
 #define AUTO_INIT_PRIO_MOD_DRIVER_CRYPTOCELL_310            1570
 #endif
+#ifndef AUTO_INIT_PRIO_MOD_NRF_MODEM
+/**
+ * @brief Nordic Modem Library priority
+ */
+#define AUTO_INIT_PRIO_MOD_NRF_MODEM             1580
+#endif
 
 #ifdef __cplusplus
 }

@@ -95,6 +95,11 @@ extern "C" {
 #define WS281X_TIMER_MAX_VALUE TIMER_1_MAX_VALUE    /**< Timer max value */
 /** @} */
 
+/**
+ * @brief Initialize board specific parameters for nrf_modem
+ */
+int nrf_modem_setup(void);
+
 #ifdef __cplusplus
 }
 #endif

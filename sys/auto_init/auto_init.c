@@ -344,6 +344,11 @@ extern void auto_init_gnrc_ipv6_static_addr(void);
 AUTO_INIT(auto_init_gnrc_ipv6_static_addr,
           AUTO_INIT_PRIO_MOD_GNRC_IPV6_STATIC_ADDR);
 #endif
+#if IS_USED(MODULE_AUTO_INIT_NRFXLIB_NRF_MODEM)
+extern void nrf_modem_bootstrap(void);
+AUTO_INIT(nrf_modem_bootstrap,
+          AUTO_INIT_PRIO_MOD_NRF_MODEM);
+#endif
 
 void auto_init(void)
 {
