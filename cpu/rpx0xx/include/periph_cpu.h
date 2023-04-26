@@ -230,6 +230,13 @@ extern "C" {
      RESETS_RESET_adc_Msk)
 
 /**
+ * @name   Length of the CPU_ID in bytes
+ * @{
+ */
+#define CPUID_LEN           (4U)
+/** @} */
+
+/**
  * @brief   Convert (port, pin) tuple to a @ref gpio_t value
  *
  * @note    The RPX0XX MCU family only has a single GPIO port. Still the API requires a
