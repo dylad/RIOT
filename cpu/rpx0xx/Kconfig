@@ -9,6 +9,7 @@ config CPU_FAM_RPX0XX
     bool
     select CPU_CORE_CORTEX_M0PLUS
     select HAS_CPU_RPX0XX
+    select HAS_PERIPH_CPUID
     select HAS_PERIPH_GPIO
     select HAS_PERIPH_GPIO_IRQ
     select HAS_PERIPH_TIMER
