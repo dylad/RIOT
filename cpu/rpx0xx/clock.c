@@ -191,3 +191,20 @@ void clock_adc_configure(CLOCKS_CLK_ADC_CTRL_AUXSRC_Enum aux)
     io_reg_atomic_set(&CLOCKS->CLK_ADC_CTRL,
                       (1u << CLOCKS_CLK_ADC_CTRL_ENABLE_Pos));
 }
+
+void clock_rtc_configure(uint32_t f_in, CLOCKS_CLK_RTC_CTRL_AUXSRC_Enum aux)
+{
+    /* Loop to find the first dividor that fits the rule:
+        RTC Clock must be between 1 and 65536 Hz */
+    for (unsigned i=1; i<)
+    /* Stop the clock generator */
+    io_reg_atomic_clear(&CLOCKS->CLK_RTC_CTRL,
+                        (1u << CLOCKS_CLK_RTC_CTRL_ENABLE_Pos));
+    /* Selects the new auxiliary clock source */
+    io_reg_write_dont_corrupt(&CLOCKS->CLK_RTC_CTRL,
+                              aux << CLOCKS_CLK_RTC_CTRL_AUXSRC_Pos,
+                              CLOCKS_CLK_RTC_CTRL_AUXSRC_Msk);
+    /* Restart the clock generator */
+    io_reg_atomic_set(&CLOCKS->CLK_RTC_CTRL,
+                      (1u << CLOCKS_CLK_RTC_CTRL_ENABLE_Pos));
+}

@@ -648,6 +648,16 @@ void clock_gpout3_configure(uint32_t f_in, uint32_t f_out, CLOCKS_CLK_GPOUT3_CTR
  * @param   aux     Auxiliary clock source
  */
 void clock_adc_configure(CLOCKS_CLK_ADC_CTRL_AUXSRC_Enum aux);
+
+/**
+ * @brief   Configure RTC ADC clock to run from a dedicated auxiliary
+ *          clock source
+ *
+ * @param   f_in        Input frequency
+ * @param   f_out       Output frequency
+ * @param   aux         Auxiliary clock source
+ */
+void clock_rtc_configure(uint32_t f_in, uint32_t f_out, CLOCKS_CLK_RTC_CTRL_AUXSRC_Enum aux);
 /** @} */
 
 /**

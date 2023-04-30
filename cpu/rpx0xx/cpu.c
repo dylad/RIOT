@@ -86,6 +86,11 @@ static void _cpu_reset(void)
                       PLL_USB_POSTDIV1, PLL_USB_POSTDIV2);
         clock_adc_configure(CLOCKS_CLK_ADC_CTRL_AUXSRC_clksrc_pll_usb);
     }
+
+    /* Configure RTC Clock (must be between 1 and 65536 Hz) fed by XOSC 12MHz */
+    if (IS_USED(MODULE_PERIPH_RTC)) {
+        clock_adc_configure(CLOCKS_CLK_ADC_CTRL_AUXSRC_xosc_clksrc);
+    }
 }
 
 void cpu_init(void)
