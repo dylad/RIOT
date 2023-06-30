@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2017 HAW Hamburg
  *               2017 Freie Universität Berlin
+ *               2023 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -16,6 +17,7 @@
  *
  * @author      Dimitri Nahm <dimitri.nahm@haw-hamburg.de>
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  *
  * @}
  */
@@ -45,6 +47,14 @@
 #define ADC_TACQ            SAADC_CH_CONFIG_TACQ_10us
 #endif
 /** @} */
+
+/* Compatibility wrapper defines for nRF9160 and nRF5340 */
+#ifdef NRF_SAADC_S
+#define NRF_SAADC NRF_SAADC_S
+#endif
+
+#define ADC_MODE(x) adc_channels[x].mode
+#define ADC_POL(x)  adc_channels[x].pol
 
 /**
  * @brief   Lock to prevent concurrency issues when used from different threads
@@ -83,15 +93,36 @@ int adc_init(adc_t line)
         NRF_SAADC->RESULT.MAXCNT = 1;
         NRF_SAADC->RESULT.PTR = (uint32_t)&result;
 
-        /* configure the first channel (the only one we use):
+        /* configure the channel:
          * - bypass resistor ladder+
          * - acquisition time as defined by board (or 10us as default)
          * - reference and gain as defined by board (or VDD as default)
          * - no oversampling */
-        NRF_SAADC->CH[0].CONFIG = ((ADC_GAIN << SAADC_CH_CONFIG_GAIN_Pos) |
-                                   (ADC_REF << SAADC_CH_CONFIG_REFSEL_Pos) |
-                                   (ADC_TACQ << SAADC_CH_CONFIG_TACQ_Pos));
-        NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
+        NRF_SAADC->CH[line].CONFIG = ((ADC_GAIN << SAADC_CH_CONFIG_GAIN_Pos) |
+                                     (ADC_REF << SAADC_CH_CONFIG_REFSEL_Pos) |
+                                     (ADC_MODE(line) << SAADC_CH_CONFIG_MODE_Pos) |
+                                     (ADC_TACQ << SAADC_CH_CONFIG_TACQ_Pos));
+        if (ADC_MODE(line) == ADC_SINGLE_ENDED) {
+            NRF_SAADC->CH[line].PSELP = adc_channels[line].psel;
+            NRF_SAADC->CH[line].PSELN = SAADC_CH_PSELN_PSELN_NC;
+        } else {
+            if (ADC_POL(line) == ADC_PSEL_POS) {
+                NRF_SAADC->CH[line].PSELP = adc_channels[line].psel;
+                NRF_SAADC->CH[line].PSELN = SAADC_CH_PSELN_PSELN_NC;
+            } else if (ADC_POL(line) == ADC_PSEL_NEG) {
+                NRF_SAADC->CH[line].PSELP = SAADC_CH_PSELP_PSELP_NC;
+                NRF_SAADC->CH[line].PSELN = adc_channels[line].psel;
+            } else {
+                /* Board misconfiguration detected */
+                assert(0);
+            }
+        }
+        NRF_SAADC->CH[line].PSELP = adc_channels[line].psel;
+        /* Make sure negative channel is NC in single-ended mode */
+        if (ADC_MODE(line) == ADC_SINGLE_ENDED) {
+            NRF_SAADC->CH[line].PSELN = SAADC_CH_PSELN_PSELN_NC;
+        } else
+        /* Disable oversampling */
         NRF_SAADC->OVERSAMPLE = SAADC_OVERSAMPLE_OVERSAMPLE_Bypass;
 
         /* calibrate SAADC */
@@ -114,23 +145,11 @@ int32_t adc_sample(adc_t line, adc_res_t res)
         return -1;
     }
 
-#ifdef SAADC_CH_PSELP_PSELP_VDDHDIV5
-    if (line == NRF52_VDDHDIV5) {
-        line = SAADC_CH_PSELP_PSELP_VDDHDIV5;
-    } else {
-        line += 1;
-    }
-#else
-    line += 1;
-#endif
-
     /* prepare device */
     prep();
-
+   
     /* set resolution */
     NRF_SAADC->RESOLUTION = res;
-    /* set line to sample */
-    NRF_SAADC->CH[0].PSELP = line;
 
     /* start the SAADC and wait for the started event */
     NRF_SAADC->EVENTS_STARTED = 0;

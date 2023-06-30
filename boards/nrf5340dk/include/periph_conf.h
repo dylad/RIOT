@@ -75,6 +75,13 @@ static const uart_conf_t uart_config[] = {
 #define UART_NUMOF          ARRAY_SIZE(uart_config) /**< UART configuration NUMOF */
 /** @} */
 
+static const adc_conf_chan_t adc_channels[] = {
+    /* port, pin, muxpos, dev */
+    { .psel = SAADC_CH_PSELP_PSELP_AnalogInput0, .pol  = ADC_PSEL_POS, .mode = ADC_SINGLE_ENDED},
+};
+
+#define ADC_NUMOF                           ARRAY_SIZE(adc_channels)
+
 #ifdef __cplusplus
 }
 #endif

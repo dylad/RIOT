@@ -277,6 +277,45 @@ typedef struct {
  */
 uint8_t gpio_int_get_exti(gpio_t pin);
 
+#if !defined(DOXYGEN) || !defined(CPU_FAM_NRF51)
+/**
+ * @brief   Override ADC resolution values
+ * @{
+ */
+#define HAVE_ADC_RES_T
+typedef enum {
+    ADC_RES_6BIT  = 0xf0,                       /**< not supported by hardware */
+    ADC_RES_8BIT  = SAADC_RESOLUTION_VAL_8bit,  /**< ADC resolution: 8 bit */
+    ADC_RES_10BIT = SAADC_RESOLUTION_VAL_10bit, /**< ADC resolution: 10 bit */
+    ADC_RES_12BIT = SAADC_RESOLUTION_VAL_12bit, /**< ADC resolution: 12 bit */
+    ADC_RES_14BIT = 0xf1,   /**< supported with oversampling, not implemented */
+    ADC_RES_16BIT = 0xf2    /**< not supported by hardware */
+} adc_res_t;
+/** @} */
+#endif /* ndef DOXYGEN || ndef CPU_FAM_NRF51 */
+
+typedef enum {
+    ADC_SINGLE_ENDED = SAADC_CH_CONFIG_MODE_SE,
+    ADC_DIFFERENTIAL = SAADC_CH_CONFIG_MODE_Diff,
+} adc_chan_mode_t;
+
+typedef enum {
+    ADC_PSEL_POS,   /**< PSEL Positive input */
+    ADC_PSEL_NEG,   /**< PSEL Negative input */
+} adc_psel_polarity_t;
+
+/**
+ * @brief ADC Channel Configuration
+ * 
+ * @example 
+ * 
+ */
+typedef struct {
+    uint32_t psel;                  /**< Channel to be used [AIN0..8/VDD/VDDH5DIV]*/
+    adc_psel_polarity_t pol;        /**< 0 for Single-en*/
+    adc_chan_mode_t mode;           /**< ADC mode: Single-Ended or Differential */
+} adc_conf_chan_t;
+
 #ifdef __cplusplus
 }
 #endif

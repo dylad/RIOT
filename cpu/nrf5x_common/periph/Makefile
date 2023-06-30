@@ -1,5 +1,12 @@
 MODULE = nrf5x_common_periph
 
+# Select the specific implementation for `periph_adc`
+ifneq (,$(filter periph_adc,$(USEMODULE)))
+  ifneq (,$(filter $(CPU_FAM),nrf52 nrf53 nrf9160))
+    SRC += adc_nrfxx.c
+  endif
+endif
+
 # Select the specific implementation for `periph_i2c`
 ifneq (,$(filter periph_i2c,$(USEMODULE)))
   ifneq (,$(filter $(CPU_FAM),nrf52 nrf9160))
