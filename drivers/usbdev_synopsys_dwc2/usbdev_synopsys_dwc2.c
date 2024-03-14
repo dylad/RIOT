@@ -34,6 +34,7 @@
 
 #include "architecture.h"
 #include "bitarithm.h"
+#include "busy_wait.h"
 #include "cpu.h"
 #include "cpu_conf.h"
 #include "log.h"
@@ -728,9 +729,24 @@ static void _set_mode_device(dwc2_usb_otg_fshs_t *usbdev)
 
     /* Force device mode */
     _global_regs(conf)->GUSBCFG |= USB_OTG_GUSBCFG_FDMOD;
-    /* Spinlock to prevent a context switch here, needs a delay of 25 ms when
+    /* Datasheet states that a delay of 25 ms is needed when
      * force switching mode */
-    ztimer_spin(ZTIMER_MSEC, 25);
+    /*TODO: Rebased once #20467 is merged, remove ztimer dep in
+            cpu/stm32/Makefile.dep. Then check if it still works
+            on real hardware.
+            I am not sure if ztimer_sleep (instead of ztimer_spin)
+            will work at early in the setup process which might
+            be the reason it was used at first.
+            Perhaps check if ztimer init is done before usbus ?
+            If that's the case and if it works, PR it. */
+    if (IS_USED(MODULE_ZTIMER_MSEC))
+        ztimer_sleep(ZTIMER_MSEC, 25);
+    else if (IS_USED(MODULE_ZTIMER_USEC)) {
+        ztimer_sleep(ZTIMER_USEC, 25 * US_PER_MS);
+    }
+    else {
+        busy_wait_us(25 * US_PER_MS);
+    }
 }
 
 static void _usbdev_init(usbdev_t *dev)
