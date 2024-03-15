@@ -488,7 +488,6 @@ static int _handle_tr_complete(usbus_t *usbus,
             break;
         default:
             DEBUG("usbus_control: Invalid state\n");
-            assert(false);
             break;
     }
     return 0;
@@ -523,11 +522,13 @@ static void _handler_ep0_transfer(usbus_t *usbus, usbus_handler_t *handler,
             _handle_tr_complete(usbus, ep0_handler, ep);
             /* Forward to every handler, EP0 transfer event, except the first
              * handler as this is the current handler used for this event */
+#ifdef MODULE_USBUS_EP0_FWD_TR
             for (usbus_handler_t *hdl = handler->next; hdl; hdl = hdl->next) {
-                if(usbus_handler_isset_flag(hdl, USBUS_HANDLER_FLAG_TR_EP0_FWD)) {
+                if (usbus_handler_isset_flag(hdl, USBUS_HANDLER_FLAG_EP0_FWD_TR)) {
                     hdl->driver->transfer_handler(usbus, hdl, ep, USBUS_EVENT_TRANSFER_COMPLETE);
                 }
             }
+#endif
             break;
         default:
             break;

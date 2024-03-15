@@ -24,6 +24,7 @@ endif
 
 ifneq (,$(filter riotboot_usb_dfu, $(USEMODULE)))
   USEMODULE += usbus_dfu
+  USEMODULE += usbus_ep0_fwd_tr
   USEMODULE += riotboot_flashwrite
   USEMODULE += ztimer_sec
   FEATURES_REQUIRED += no_idle_thread

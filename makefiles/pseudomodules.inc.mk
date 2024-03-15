@@ -561,6 +561,7 @@ PSEUDOMODULES += sys_bus_%
 PSEUDOMODULES += tiny_strerror_as_strerror
 PSEUDOMODULES += tiny_strerror_minimal
 PSEUDOMODULES += usbus_urb
+PSEUDOMODULES += usbus_ep0_fwd_tr
 PSEUDOMODULES += vdd_lc_filter_%
 ## @defgroup pseudomodule_vfs_auto_format vfs_auto_format
 ## @brief Format mount points at startup unless they can be mounted

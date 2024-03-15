@@ -215,9 +215,9 @@ static int _dfu_class_control_req(usbus_t *usbus, usbus_dfu_device_t *dfu, usb_s
             else if (dfu->dfu_state == USB_DFU_STATE_DFU_MANIFEST_SYNC) {
                 /* Scheduled reboot, so we can answer back dfu-util before rebooting */
                 dfu->dfu_state = USB_DFU_STATE_DFU_DL_IDLE;
-#ifdef MODULE_RIOTBOOT_USB_DFU
+#ifdef MODULE_USBUS_EP0_FWD_TR
                 /* Set specific flag to forward TRANSFER_COMPLETE event to this interface */
-                usbus_handler_set_flag(&dfu->handler_ctrl, USBUS_HANDLER_FLAG_TR_EP0_FWD);
+                usbus_handler_set_flag(&dfu->handler_ctrl, USBUS_HANDLER_FLAG_EP0_FWD_TR);
 #endif
             }
             memset(&buf, 0, sizeof(buf));
