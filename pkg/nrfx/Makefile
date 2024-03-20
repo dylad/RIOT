@@ -6,4 +6,9 @@ PKG_LICENSE=BSD-3-Clause
 
 include $(RIOTBASE)/pkg/pkg.mk
 
-all:
+.PHONY: nrfx_ipc
+
+all: nrfx_ipc
+
+nrfx_ipc:
+	$(QQ)"$(MAKE)" -C $(PKG_SOURCE_DIR)/drivers/src -f $(CURDIR)/Makefile.$@

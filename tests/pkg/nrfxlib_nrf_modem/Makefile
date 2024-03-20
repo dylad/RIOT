@@ -1,4 +1,4 @@
-include ../Makefile.tests_common
+include ../Makefile.pkg_common
 
 BOARD ?= nrf9160dk
 
@@ -9,7 +9,7 @@ USEMODULE += nrfxlib_nrf_modem
 DEFAULT_MODULE += auto_init_nrfxlib_nrf_modem
 
 USEMODULE += shell
-USEMODULE += shell_commands
+USEMODULE += shell_cmds_default
 USEMODULE += ps
 USEMODULE += ztimer_msec
 USEMODULE += ztimer_sec

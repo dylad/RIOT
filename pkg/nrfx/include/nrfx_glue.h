@@ -43,6 +43,8 @@
  * @author      Nordic Semiconductor ASA
  */
 
+ #include "assert.h"
+
 #ifndef NRFX_GLUE_H
 #define NRFX_GLUE_H
 
@@ -55,14 +57,14 @@ extern "C" {
  *
  * @param expression Expression to be evaluated.
  */
-#define NRFX_ASSERT(expression)
+#define NRFX_ASSERT(expression) assert(expression)
 
 /**
  * @brief Macro for placing a compile time assertion.
  *
  * @param expression Expression to be evaluated.
  */
-#define NRFX_STATIC_ASSERT(expression)
+#define NRFX_STATIC_ASSERT(expression)  static_assert(expression)
 
 /**
  * @brief Macro for setting the priority of a specific IRQ.
@@ -70,14 +72,15 @@ extern "C" {
  * @param irq_number IRQ number.
  * @param priority   Priority to be set.
  */
-#define NRFX_IRQ_PRIORITY_SET(irq_number, priority)
+#define NRFX_IRQ_PRIORITY_SET(irq_number, priority) \
+                              NVIC_SetPriority(irq_number, priority)
 
 /**
  * @brief Macro for enabling a specific IRQ.
  *
  * @param irq_number IRQ number.
  */
-#define NRFX_IRQ_ENABLE(irq_number)
+#define NRFX_IRQ_ENABLE(irq_number) NVIC_EnableIRQ(irq_number)
 
 /**
  * @brief Macro for checking if a specific IRQ is enabled.
@@ -228,7 +231,7 @@ extern "C" {
  * @return Number of leading 0-bits in @p value, starting at the most significant bit position.
  *         If x is 0, the result is undefined.
  */
-#define NRFX_CLZ(value)
+#define NRFX_CLZ(value) __builtin_clz(value)
 
 /**
  * @brief Macro for counting trailing zeros.
@@ -238,7 +241,7 @@ extern "C" {
  * @return Number of trailing 0-bits in @p value, starting at the least significant bit position.
  *         If x is 0, the result is undefined.
  */
-#define NRFX_CTZ(value)
+#define NRFX_CTZ(value) __builtin_ctz(value)
 
 /**
  * @brief When set to a non-zero value, this macro specifies that the

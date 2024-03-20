@@ -27,17 +27,16 @@
 #include "cpu.h"
 #include "msg.h"
 #include "shell.h"
-#include "shell_commands.h"
 #include "thread.h"
 #include "tlsf.h"
 #include "ztimer.h"
 #include "ztimer/periodic.h"
 
 #include "nrf_modem_os.h"
-#include "nrf_modem_riot.h"
 #include "nrf_modem.h"
 #include "nrf_modem_gnss.h"
 #include "nrf_modem_at.h"
+#include "nrf_modem_trace.h"
 
 #define ENABLE_DEBUG 0
 #include "debug.h"
@@ -46,12 +45,13 @@
 #define CONFIG_GNSS_MSG_QUEUE 8
 #define CONFIG_SHMEM_SIZE 8192 /* bytes */
 
-char gnss_stack[THREAD_STACKSIZE_MAIN];
+char gnss_stack[THREAD_STACKSIZE_MAIN*2];
+
 kernel_pid_t gnss_pid = KERNEL_PID_UNDEF;
 
 struct nrf_modem_gnss_nmea_data_frame nmea_data;
 
-static int _led_blink(void* arg)
+static bool _led_blink(void* arg)
 {
     (void)arg;
 #ifdef LED0_TOGGLE
@@ -90,13 +90,8 @@ static void _gnss_event_handler(int event)
 static int _gnss_init(void)
 {
     int ret;
-    uint8_t system_mask = NRF_MODEM_GNSS_SYSTEM_GPS_MASK;
+    //uint8_t system_mask = NRF_MODEM_GNSS_SYSTEM_GPS;
 
-    /* Initialize GNSS service */
-    ret = nrf_modem_gnss_init();
-    if (ret != 0) {
-        printf("Cannot initialize GNSS:%d\n", ret);
-    }
     puts("[gnss_thread]: GNSS Initialized");
 
     /* Define handler which will process GNSS events */
@@ -125,11 +120,11 @@ static int _gnss_init(void)
         DEBUG("Cannot set fix retry:%d\n", ret);
         return -1;
     }
-    ret = nrf_modem_gnss_system_mask_set(system_mask);
+   /* ret = nrf_modem_gnss_signal_mask_set(system_mask);
     if (ret != 0) {
         DEBUG("Cannot select system mask:%d\n", ret);
         return -1;
-    }
+    }*/
 
     ret = nrf_modem_gnss_nmea_mask_set(
                                         NRF_MODEM_GNSS_NMEA_GLL_MASK |
@@ -151,8 +146,7 @@ static int _gnss_init(void)
     return 0;
 }
 
-/* Threads definitions */
-
+extern void nrf_modem_bootstrap(void);
 void *gnss_thread(void *arg)
 {
     (void)arg;
@@ -160,6 +154,7 @@ void *gnss_thread(void *arg)
     ztimer_periodic_t led_timer;
     bool gnss_print = false;
     int ret;
+
     puts("[gnss_thread]: starting...");
 
     msg_t msgq[CONFIG_GNSS_MSG_QUEUE];

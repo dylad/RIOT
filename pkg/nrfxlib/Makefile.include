@@ -2,13 +2,16 @@
 PSEUDOMODULES += nrfxlib_nrf_modem \
                  #
 
-DIRS += $(RIOTPKG)/nrfxlib/contrib
+DIRS += $(RIOTPKG)/nrfxlib/contrib 
 
 INCLUDES += -I$(RIOTPKG)/nrfxlib/include
 
 ifneq (,$(filter nrfxlib_nrf_modem,$(USEMODULE)))
   INCLUDES += -I$(BUILD_DIR)/pkg/nrfxlib/nrf_modem/include
+  INCLUDES += -I$(BUILD_DIR)/pkg/nrfx/drivers/include
   ARCHIVES += $(BINDIR)/libmodem.a
 endif
 
+CFLAGS += -Wno-cast-align
+CFLAGS += -Wno-format-nonliteral
 

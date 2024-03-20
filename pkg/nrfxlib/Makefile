@@ -1,11 +1,11 @@
 PKG_NAME=nrfxlib
 PKG_URL=https://github.com/nrfconnect/sdk-nrfxlib
-PKG_VERSION=9c49c779a2c938dd6a4a2e7192f4ff1d9c32f346
+PKG_VERSION=13cd978b22d192447537a60f7fae5fe092930dc4
 PKG_LICENSE=-Nordic-5-Clause
 
 include $(RIOTBASE)/pkg/pkg.mk
 
-ARCHIVE_PATH = $(PKG_SOURCE_DIR)/nrf_modem/lib/cortex-m33/soft-float/libmodem.a
+ARCHIVE_PATH = $(PKG_SOURCE_DIR)/nrf_modem/lib/nRF9160/soft-float/libmodem.a
 PKG_BUILD_DIR = $(BUILD_DIR)/pkg/$(PKG_NAME)
 
 NRFXLIB_MODULES := $(filter-out $(IGNORE_MODULES),$(filter nrfxlib_%,$(USEMODULE)))

@@ -1,6 +1,6 @@
 PKG_NAME = nrf_modem_fw
-PKG_URL = https://www.nordicsemi.com/-/media/Software-and-other-downloads/Dev-Kits/nRF9160-DK/nRF9160-modem-FW/mfw_nrf9160_1.3.0.zip
-PKG_VERSION = 1.3.0
+PKG_URL = https://nsscprodmedia.blob.core.windows.net/prod/software-and-other-downloads/dev-kits/nrf9160-dk/nrf9160-sip-application-firmware/nrf9160dk_fw_2024-03-13_af2b60d2.zip
+PKG_VERSION = 1.3.6
 PKG_EXT     = zip
 PKG_LICENSE = Nordic-3-clause-BSD
 
@@ -19,13 +19,13 @@ endif
 prepare:
 	@mkdir $(PKG_SOURCE_DIR)
 
-all: $(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.0.zip flash_fw
+all: $(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.6.zip #flash_fw
 
-$(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.0.zip:
+$(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.6.zip:
 	$(Q)$(DOWNLOAD_TO_FILE) $@ $(PKG_URL)
 
 flash_fw:
-	$(Q)nrfjprog $(PROG_ARGS) --program $(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.0.zip --sectorerase
+	$(Q)nrfjprog $(PROG_ARGS) --program $(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.6.zip --sectorerase
 
 distclean::
 	rm -f $(PKG_SOURCE_DIR)/mfw_nrf9160_1.3.0.zip

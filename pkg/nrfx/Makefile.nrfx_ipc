@@ -1,0 +1,8 @@
+MODULE=nrfx_ipc
+
+CFLAGS += -DNRFX_IPC_ENABLED
+CFLAGS += -DNRF_IPC=NRF_IPC_NS
+
+SRC := nrfx_ipc.c
+
+include $(RIOTBASE)/Makefile.base

@@ -1,6 +1,8 @@
 USEMODULE += nrfxlib
 
 USEPKG += tlsf
+USEPKG += nrfx
+USEMODULE += nrfx_ipc
 USEMODULE += sema
 USEMODULE += ztimer
 USEMODULE += ztimer_msec
