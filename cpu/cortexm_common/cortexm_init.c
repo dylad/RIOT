@@ -66,6 +66,16 @@ CORTEXM_STATIC_INLINE void cortexm_init_misc(void)
 #ifdef SCB_CCR_STKALIGN_Msk
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 #endif
+
+/* Check if SCB_SHCSR_BUSFAULTENA_Msk is defined by CMSIS header.
+   If true, we can assume that USGFAULT and MEMFAULT also exist.
+   This is the case for ARMv7-M and ARMv8-M Mainline and it will
+   avoid to have to manually each compatible core*/
+#ifdef SCB_SHCSR_BUSFAULTENA_Msk
+    /* Enable bus, mem and usage faults */
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk |
+                  SCB_SHCSR_MEMFAULTENA_Msk;
+#endif
 }
 
 void cortexm_init(void)
