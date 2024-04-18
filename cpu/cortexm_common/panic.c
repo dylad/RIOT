@@ -23,22 +23,23 @@
 #include "cpu.h"
 #include "log.h"
 
-#ifdef DEVELHELP
-static void print_ipsr(void)
-{
-    uint32_t ipsr = __get_IPSR() & IPSR_ISR_Msk;
-    if(ipsr) {
-        /* if you get here, you might have forgotten to implement the isr
-         * for the printed interrupt number */
-        LOG_ERROR("Inside isr %d\n", ((int)ipsr) - 16);
-    }
-}
-#endif
-
 void panic_arch(void)
 {
 #ifdef DEVELHELP
-    print_ipsr();
+    uint32_t ipsr = __get_IPSR() & IPSR_ISR_Msk;
+    if(ipsr) {
+        int32_t isr = (((int)ipsr) - 16);
+        LOG_ERROR("Inside isr %ld\n", isr);
+        /* Print associated status register if any */
+        LOG_ERROR("SCB->CFSR:0x%08lx\n", SCB->CFSR);
+        if (isr == MemoryManagement_IRQn) {
+            LOG_ERROR("SCB->MMFAR:0x%08lx\n", SCB->MMFAR);
+        }
+        else if (isr == BusFault_IRQn) {
+            LOG_ERROR("SCB->BFAR:0x%08lx\n", SCB->BFAR);
+        }
+    }
+
     /* The bkpt instruction will signal to the debugger to break here. */
     __asm__("bkpt #0");
 #endif
