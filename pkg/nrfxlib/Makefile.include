@@ -14,4 +14,5 @@ endif
 
 CFLAGS += -Wno-cast-align
 CFLAGS += -Wno-format-nonliteral
+CFLAGS += -DNRF_IPC=NRF_IPC_NS
 

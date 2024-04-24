@@ -4,6 +4,7 @@ BOARD ?= nrf9160dk
 
 USEPKG += nrfxlib
 USEMODULE += nrfxlib_nrf_modem
+USEMODULE += log_color
 
 # Auto init
 DEFAULT_MODULE += auto_init_nrfxlib_nrf_modem

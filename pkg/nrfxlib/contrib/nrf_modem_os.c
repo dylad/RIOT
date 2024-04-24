@@ -22,8 +22,7 @@
 #include "nrf_modem_os.h"
 #include "nrf_modem_trace.h"
 #include "nrf_errno.h"
-//#include "nrf_modem_platform.h"
-//#include "nrf_modem_limits.h"
+
 #include "ztimer.h"
 #include "tlsf.h"
 #include "sema.h"
@@ -31,11 +30,12 @@
 #include "busy_wait.h"
 
 #include "cpu.h"
+#include "nrf_clock.h"
 #include "periph_cpu.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#define NRF_IPC NRF_IPC_NS
+
 #include "nrfx_ipc.h"
 
 /* Enabling debug may break timing, use it with care */
@@ -84,7 +84,8 @@ void nrf_modem_os_shutdown(void)
 void nrf_modem_os_event_notify(uint32_t context)
 {
     (void)context;
-    DEBUG_PUTS("OSNOTIF\n");
+    //DEBUG_PUTS("OSNOTIF\n");
+    LED3_ON;
 }
 
 int nrf_modem_os_sleep(uint32_t timeout)
@@ -124,7 +125,7 @@ void nrf_modem_os_sem_give(void *sem)
 {
     int ret;
     sema_t* sema = (sema_t*)sem;
-    DEBUG("[nrf_modem_os]:%s\n", __FUNCTION__);
+    DEBUG("\n[nrf_modem_os]:%s %p\n", __FUNCTION__, sem);
     ret = sema_post(sema);
     if ( ret != 0) {
        assert(0);

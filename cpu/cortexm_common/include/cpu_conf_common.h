@@ -41,7 +41,7 @@ extern "C" {
 #define THREAD_EXTRA_STACKSIZE_PRINTF   (512)
 #endif
 #ifndef THREAD_STACKSIZE_DEFAULT
-#define THREAD_STACKSIZE_DEFAULT        (1024)
+#define THREAD_STACKSIZE_DEFAULT        (4096U)
 #endif
 #ifndef THREAD_STACKSIZE_IDLE
 #define THREAD_STACKSIZE_IDLE           (256)
@@ -53,7 +53,7 @@ extern "C" {
  * @{
  */
 #ifndef ISR_STACKSIZE
-#define ISR_STACKSIZE                   (1024U)
+#define ISR_STACKSIZE                   (4096U)
 #endif
 /** @} */
 

@@ -61,7 +61,9 @@ static void *overflow_arg;
 void rtt_init(void)
 {
     /* enable the low-frequency clock */
-    clock_start_lf();
+    if (!IS_USED(MODULE_NRFXLIB_NRF_MODEM)) {
+        clock_start_lf();
+    }
     /* make sure device is powered */
 #ifdef CPU_FAM_NRF51
     DEV->POWER = 1;

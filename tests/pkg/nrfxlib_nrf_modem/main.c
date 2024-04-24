@@ -45,7 +45,7 @@
 #define CONFIG_GNSS_MSG_QUEUE 8
 #define CONFIG_SHMEM_SIZE 8192 /* bytes */
 
-char gnss_stack[THREAD_STACKSIZE_MAIN*2];
+char gnss_stack[THREAD_STACKSIZE_MAIN];
 
 kernel_pid_t gnss_pid = KERNEL_PID_UNDEF;
 

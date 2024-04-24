@@ -19,6 +19,7 @@
  */
 
 /* Only include content of this file if the nrf_modem pkg is used */
+#if 0
 #include "board.h"
 #include "nrf_modem_at.h"
 
@@ -62,3 +63,4 @@ int nrf_modem_setup(void)
     }
     return 0;
 }
+#endif
