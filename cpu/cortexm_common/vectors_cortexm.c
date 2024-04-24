@@ -487,6 +487,13 @@ void debug_mon_default(void)
 }
 #endif
 
+#ifdef SCB_SHCSR_SECUREFAULTENA_Msk
+void secure_fault_default(void)
+{
+    core_panic(PANIC_SECURE_FAULT, "SECURE FAULT HANDLER");
+}
+#endif
+
 void dummy_handler_default(void)
 {
     core_panic(PANIC_DUMMY_HANDLER, "DUMMY HANDLER");
@@ -517,7 +524,7 @@ ISR_VECTOR(0) const cortexm_base_t cortex_vector_base = {
         [14] = isr_systick,
 
         /* -9 to -6 reserved entries can be defined by the cpu module */
-        #ifdef CORTEXM_VECTOR_RESERVED_0X1C
+        #if defined(CORTEXM_VECTOR_RESERVED_0X1C) && !defined(SCB_SHCSR_SECUREFAULTENA_Msk)
         [6] = (isr_t)(CORTEXM_VECTOR_RESERVED_0X1C),
         #endif  /* CORTEXM_VECTOR_RESERVED_0X1C */
         #ifdef CORTEXM_VECTOR_RESERVED_0X20
@@ -543,5 +550,10 @@ ISR_VECTOR(0) const cortexm_base_t cortex_vector_base = {
         /* [-4] debug monitor exception */
         [11] = debug_mon_default,
 #endif
+
+#ifdef SCB_SHCSR_SECUREFAULTENA_Msk
+        /* [-9] secure fault exception */
+        [ 6] = secure_fault_default,
+#endif /* SCB_SHCSR_SECUREFAULTENA_Msk */
     }
 };

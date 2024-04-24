@@ -48,6 +48,9 @@ typedef enum {
     PANIC_USAGE_FAULT,          /**< undefined instruction or unaligned access */
     PANIC_DEBUG_MON,            /**< debug interrupt */
 #endif
+#ifdef SCB_SHCSR_SECUREFAULTENA_Msk
+    PANIC_SECURE_FAULT,         /**< secure fault */
+#endif
     PANIC_DUMMY_HANDLER,        /**< unhandled interrupt */
 #endif
     PANIC_SSP,                  /**< stack smashing protector failure */

@@ -66,6 +66,11 @@ CORTEXM_STATIC_INLINE void cortexm_init_misc(void)
 #ifdef SCB_CCR_STKALIGN_Msk
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 #endif
+
+    /* Enable Secure Fault exception if it exists */
+#ifdef SCB_SHCSR_SECUREFAULTENA_Msk
+    SCB->SHCSR |= SCB_SHCSR_SECUREFAULTENA_Msk;
+#endif
 }
 
 void cortexm_init(void)
