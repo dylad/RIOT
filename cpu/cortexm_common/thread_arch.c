@@ -297,6 +297,14 @@ void NORETURN cpu_switch_context_exit(void)
     UNREACHABLE();
 }
 
+#ifdef TMPTEST
+static int __attribute__((used)) _get_new_stacksize(unsigned int *args) {
+    thread_t* t = (thread_t*) args;
+    return ((uint32_t)t + t->stack_size);
+}
+#endif
+
+
 #if CPU_CORE_CORTEXM_FULL_THUMB
 void __attribute__((naked)) __attribute__((used)) isr_pendsv(void) {
     __asm__ volatile (
@@ -344,6 +352,14 @@ void __attribute__((naked)) __attribute__((used)) isr_pendsv(void) {
     "tst    lr, #0x10                 \n"
     "it     eq                        \n"
     "vldmiaeq r0!, {s16-s31}          \n" /* load FPU registers if saved */
+#endif
+#ifdef TMPTEST
+    "mov    r1, r0                    \n" /* get stack pointer limit from user mode */
+    "mov    r2, lr                    \n"
+    "bl _get_new_stacksize            \n"
+    "msr    psplim, r0                \n"
+    "mov r0, r1                       \n"
+    "mov lr, r2 \n"
 #endif
     "msr    psp, r0                   \n" /* restore user mode SP to PSP reg */
     "bx     lr                        \n" /* load exception return value to PC,
