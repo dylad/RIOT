@@ -298,9 +298,9 @@ void NORETURN cpu_switch_context_exit(void)
 }
 
 #ifdef TMPTEST
-static int __attribute__((used)) _get_new_stacksize(unsigned int *args) {
+static void* __attribute__((used)) _get_new_stacksize(unsigned int *args) {
     thread_t* t = (thread_t*) args;
-    return ((uint32_t)t + t->stack_size);
+    return thread_get_stackstart(t);
 }
 #endif
 
@@ -345,21 +345,19 @@ void __attribute__((naked)) __attribute__((used)) isr_pendsv(void) {
 
     /* current thread context is now saved */
     "restore_context:                 \n" /* Label to skip thread state saving */
-
+#ifdef TMPTEST
+    "mov    r2, r0                    \n" /* get stack pointer limit from user mode */
+    "bl _get_new_stacksize            \n"
+    "msr    psplim, r0                \n"
+    "ldr r0, [r2]                     \n"
+#else
     "ldr    r0, [r0]                  \n" /* load tcb->sp to register 1 */
+#endif
     "ldmia  r0!, {r4-r11,lr}          \n" /* restore other registers, including lr */
 #ifdef MODULE_CORTEXM_FPU
     "tst    lr, #0x10                 \n"
     "it     eq                        \n"
     "vldmiaeq r0!, {s16-s31}          \n" /* load FPU registers if saved */
-#endif
-#ifdef TMPTEST
-    "mov    r1, r0                    \n" /* get stack pointer limit from user mode */
-    "mov    r2, lr                    \n"
-    "bl _get_new_stacksize            \n"
-    "msr    psplim, r0                \n"
-    "mov r0, r1                       \n"
-    "mov lr, r2 \n"
 #endif
     "msr    psp, r0                   \n" /* restore user mode SP to PSP reg */
     "bx     lr                        \n" /* load exception return value to PC,

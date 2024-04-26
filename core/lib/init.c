@@ -100,7 +100,8 @@ static void *idle_thread(void *arg)
 
     return NULL;
 }
-
+extern uint32_t _estack;
+extern uint32_t _sstack;
 void kernel_init(void)
 {
     if (!IS_USED(MODULE_CORE_THREAD)) {
@@ -123,6 +124,8 @@ void kernel_init(void)
                   THREAD_PRIORITY_MAIN,
                   THREAD_CREATE_WOUT_YIELD | THREAD_CREATE_STACKTEST,
                   main_trampoline, NULL, "main");
+    printf("sstack:%lx estack:%lx\n", (uint32_t)&_sstack, (uint32_t)&_estack);
+    printf("main thread stack:%p\n", main_stack);
 
     cpu_switch_context_exit();
 }

@@ -224,6 +224,7 @@ kernel_pid_t thread_create(char *stack, int stacksize, uint8_t priority,
      * (uintptr_t) intermediately to silence -Wcast-align. (We manually made
      * sure alignment is correct above.) */
     thread_t *thread = (thread_t *)(uintptr_t)(stack + stacksize);
+    printf("Creating thread:%p with name:%s\n", thread, name);
 
 #ifdef PICOLIBC_TLS
 #if __PICOLIBC_MAJOR__ > 1 || __PICOLIBC_MINOR__ >= 8
