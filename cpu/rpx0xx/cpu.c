@@ -88,6 +88,39 @@ static void _cpu_reset(void)
     }
 }
 
+    /* Start the second core in IDLE thread before starting the scheduler */
+void cpu_start_secondary_core(kernel_pid_t pid) {
+    /* Put RP2040 procedure to start Core1 here */
+    thread_t* thread = thread_get(pid);
+    unsigned count = 0, retries = 0;
+    uint32_t ret;
+    const uint32_t start_sequence[] =
+        { 0, 0, 1, (uintptr_t)SCB->VTOR,
+         (uintptr_t)thread_get_sp(thread),
+         ((uintptr_t)thread_get_entrypoint(pid)|0x01)
+        };
+    do {
+        // drain fifo
+        // push data
+        while(!(SIO->FIFO_ST & SIO_FIFO_ST_RDY_Msk)) {}
+        SIO->FIFO_WR = start_sequence[count];
+        /* Signal to CORE1 that we sent data */
+        __SEV();
+        // pop response
+        while(!(SIO->FIFO_ST & SIO_FIFO_ST_VLD_Msk)) {}
+        ret = SIO->FIFO_RD;
+        if (ret == start_sequence[count]) {
+            count++;
+        } else {
+            retries++;
+        }
+        if (retries > 10) {
+            /* TODO: rework this */
+            assert(0);
+        }
+    } while (count < ARRAY_SIZE(start_sequence));
+}
+
 void cpu_init(void)
 {
     /* initialize the Cortex-M core */

@@ -283,6 +283,9 @@ kernel_pid_t thread_create(char *stack, int stacksize, uint8_t priority,
 
     thread->pid = pid;
     thread->sp = thread_stack_init(function, arg, stack, stacksize);
+#ifdef MODULE_ARCH_SMP
+    thread->entry_point = function;
+#endif
 
 #if defined(DEVELHELP) || IS_ACTIVE(SCHED_TEST_STACK) || \
     defined(MODULE_MPU_STACK_GUARD) || defined(MODULE_CORTEXM_STACK_LIMIT)

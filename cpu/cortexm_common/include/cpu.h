@@ -248,6 +248,14 @@ static inline uint32_t cpu_get_image_baseaddr(void)
  */
 bool cpu_check_address(volatile const char *address);
 
+/**
+ * @brief   Start second core with its idle thread
+ *
+ * This function starts the secondary core with its idle thread
+ *
+ */
+void cpu_start_secondary_core(kernel_pid_t pid);
+
 #ifdef __cplusplus
 }
 #endif

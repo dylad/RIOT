@@ -206,6 +206,9 @@ struct _thread {
 #ifdef PICOLIBC_TLS
     void *tls;                      /**< thread local storage ptr */
 #endif
+#ifdef MODULE_ARCH_SMP
+    thread_task_func_t entry_point;  /**< Thread entry point function */
+#endif
 };
 
 /**
@@ -235,6 +238,9 @@ struct _thread {
  *        debugging and profiling purposes)
  */
 #define THREAD_CREATE_STACKTEST         (8)
+
+#define THREAD_CREATE_CORE0_ONLY        (0x10)
+#define THREAD_CREATE_CORE1_ONLY        (0x20)
 /** @} */
 
 /**
@@ -305,6 +311,12 @@ static inline thread_t *thread_get(kernel_pid_t pid)
  */
 thread_status_t thread_getstatus(kernel_pid_t pid);
 
+#ifdef MODULE_ARCH_SMP
+static inline thread_task_func_t thread_get_entrypoint(kernel_pid_t pid)
+{
+    return sched_threads[pid]->entry_point;
+}
+#endif
 /**
  * @brief Puts the current thread into sleep mode. Has to be woken up externally.
  */

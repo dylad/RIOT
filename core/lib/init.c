@@ -47,6 +47,9 @@ extern int main(void);
 
 static char main_stack[THREAD_STACKSIZE_MAIN];
 static char idle_stack[THREAD_STACKSIZE_IDLE];
+#ifdef MODULE_ARCH_SMP
+static char idle1_stack[THREAD_STACKSIZE_IDLE];
+#endif
 
 static void *main_trampoline(void *arg)
 {
@@ -115,8 +118,19 @@ void kernel_init(void)
     if (IS_USED(MODULE_CORE_IDLE_THREAD)) {
         thread_create(idle_stack, sizeof(idle_stack),
                       THREAD_PRIORITY_IDLE,
-                      THREAD_CREATE_WOUT_YIELD | THREAD_CREATE_STACKTEST,
-                      idle_thread, NULL, "idle");
+                      THREAD_CREATE_WOUT_YIELD | THREAD_CREATE_STACKTEST |
+                       ((IS_USED(MODULE_ARCH_SMP))?THREAD_CREATE_CORE0_ONLY:0),
+                      idle_thread, NULL, 
+                      ((IS_USED(MODULE_ARCH_SMP))?"idle":"idle core0"));
+   
+
+#ifdef MODULE_ARCH_SMP
+        thread_create(idle1_stack, sizeof(idle1_stack),
+                      THREAD_PRIORITY_IDLE,
+                      THREAD_CREATE_WOUT_YIELD | THREAD_CREATE_STACKTEST |
+                      THREAD_CREATE_CORE1_ONLY,
+                      idle_thread, NULL, "idle core1");
+#endif
     }
 
     thread_create(main_stack, sizeof(main_stack),

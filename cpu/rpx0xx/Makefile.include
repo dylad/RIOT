@@ -9,6 +9,10 @@ CFLAGS += -D$(CPU_MODEL)
 CFLAGS += -DROM_START_ADDR=$(ROM_START_ADDR)
 CFLAGS += -DRAM_START_ADDR=$(RAM_START_ADDR)
 
+ifneq (,$(filter arch_smp,$(FEATURES_USED)))
+  CFLAGS += -DARCH_SMP_CORE_NUMOF=2
+endif
+
 INCLUDES += -I$(RIOTCPU)/rpx0xx/include
 
 VECTORS_O       ?= $(BINDIR)/cpu/vectors.o

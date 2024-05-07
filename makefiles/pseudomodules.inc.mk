@@ -19,7 +19,7 @@
 ## See also <a href="creating-modules.html#pseudomodules">the documentation on pseudomodules in general</a>.
 ##
 ## @{
-
+PSEUDOMODULES += arch_smp
 PSEUDOMODULES += atomic_utils
 PSEUDOMODULES += base64url
 

@@ -80,6 +80,10 @@ endif
 
 # select cortexm_stack_limit pseudomodule if the corresponding
 # feature is used
+USEMODULE += $(filter arch_smp, $(FEATURES_USED))
+
+# select cortexm_stack_limit pseudomodule if the corresponding
+# feature is used
 USEMODULE += $(filter cortexm_stack_limit, $(FEATURES_USED))
 
 # select cortexm_svc pseudomodule if the corresponding feature is used

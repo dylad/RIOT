@@ -20,6 +20,7 @@ FEATURES_EXISTING := \
     arch_native \
     arch_nuclei \
     arch_riscv \
+    arch_smp \
     arduino_analog \
     arduino_dac \
     arduino_i2c \
