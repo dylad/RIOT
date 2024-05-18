@@ -26,6 +26,9 @@
 #include "io_reg.h"
 #include "stdio_base.h"
 #include "vendor/RP2040.h"
+#include "board.h"
+#include "clk.h"
+#include "ztimer.h"
 
 #define ENABLE_DEBUG        0
 #include "debug.h"
@@ -88,19 +91,49 @@ static void _cpu_reset(void)
     }
 }
 
+void dumb_delay(uint32_t delay)
+{
+    for (uint32_t i = 0; i < delay; i++) {
+        __asm__("nop");
+    }
+}
+
+void blinky(void) {
+    while(1) {
+        LED0_ON;
+        //printf("fuu\n");
+         for (uint32_t i = 0; i < 125000000; i++) {
+            __asm__("nop");
+        }
+       LED0_TOGGLE;
+       // LED0_TOGGLE;
+    }
+    LED0_OFF;
+    assert(0);
+}
     /* Start the second core in IDLE thread before starting the scheduler */
 void cpu_start_secondary_core(kernel_pid_t pid) {
     /* Put RP2040 procedure to start Core1 here */
-    thread_t* thread = thread_get(pid);
+   // thread_t* thread = thread_get(pid);
+   (void)pid;
     unsigned count = 0, retries = 0;
     uint32_t ret;
     const uint32_t start_sequence[] =
         { 0, 0, 1, (uintptr_t)SCB->VTOR,
-         (uintptr_t)thread_get_sp(thread),
-         ((uintptr_t)thread_get_entrypoint(pid)|0x01)
+         (uintptr_t)0x20030000,
+         ((uintptr_t)blinky)
         };
+
+    printf("Starting core1 with pid:%li\n", coreclk());
     do {
         // drain fifo
+        if (!start_sequence[count]) {
+            while (SIO->FIFO_ST & SIO_FIFO_ST_VLD_Msk) {
+                (void) SIO->FIFO_RD; 
+                __SEV();
+            }
+            
+        }
         // push data
         while(!(SIO->FIFO_ST & SIO_FIFO_ST_RDY_Msk)) {}
         SIO->FIFO_WR = start_sequence[count];
@@ -119,6 +152,8 @@ void cpu_start_secondary_core(kernel_pid_t pid) {
             assert(0);
         }
     } while (count < ARRAY_SIZE(start_sequence));
+   
+    printf("Sequence was 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx 0x%lx\n",start_sequence[0], start_sequence[1], start_sequence[2], start_sequence[3], start_sequence[4], start_sequence[5]);
 }
 
 void cpu_init(void)
@@ -135,4 +170,6 @@ void cpu_init(void)
 
     /* trigger static peripheral initialization */
     periph_init();
+    cpu_start_secondary_core(0);
+
 }

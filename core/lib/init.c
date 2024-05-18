@@ -30,6 +30,8 @@
 #include "periph/pm.h"
 #include "thread.h"
 #include "stdio_base.h"
+#include "board.h"
+#include "ztimer.h"
 
 #if IS_USED(MODULE_VFS)
 #include "vfs.h"
@@ -48,7 +50,7 @@ extern int main(void);
 static char main_stack[THREAD_STACKSIZE_MAIN];
 static char idle_stack[THREAD_STACKSIZE_IDLE];
 #ifdef MODULE_ARCH_SMP
-static char idle1_stack[THREAD_STACKSIZE_IDLE];
+//static char idle1_stack[THREAD_STACKSIZE_IDLE];
 #endif
 
 static void *main_trampoline(void *arg)
@@ -94,11 +96,11 @@ static void *main_trampoline(void *arg)
 static void *idle_thread(void *arg)
 {
     (void)arg;
-
+    LED0_ON;
     while (1) {
-        if (IS_USED(MODULE_PERIPH_PM)) {
-            pm_set_lowest();
-        }
+        ztimer_sleep(ZTIMER_MSEC, 500);
+        LED0_TOGGLE;
+        printf("Hello from Core %li\n", SIO->CPUID);
     }
 
     return NULL;
@@ -106,6 +108,7 @@ static void *idle_thread(void *arg)
 
 void kernel_init(void)
 {
+
     if (!IS_USED(MODULE_CORE_THREAD)) {
         /* RIOT without threads */
         main_trampoline(NULL);
@@ -123,14 +126,17 @@ void kernel_init(void)
                       idle_thread, NULL, 
                       ((IS_USED(MODULE_ARCH_SMP))?"idle":"idle core0"));
    
-
-#ifdef MODULE_ARCH_SMP
-        thread_create(idle1_stack, sizeof(idle1_stack),
+    }
+    else {
+       /* #ifdef MODULE_ARCH_SMP
+    kernel_pid_t pid;
+        pid = thread_create(idle1_stack, sizeof(idle1_stack),
                       THREAD_PRIORITY_IDLE,
                       THREAD_CREATE_WOUT_YIELD | THREAD_CREATE_STACKTEST |
                       THREAD_CREATE_CORE1_ONLY,
                       idle_thread, NULL, "idle core1");
-#endif
+        cpu_start_secondary_core(pid);
+#endif*/
     }
 
     thread_create(main_stack, sizeof(main_stack),
