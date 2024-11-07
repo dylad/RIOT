@@ -367,6 +367,38 @@ Eventually, the setup will inform you of the completion of the installation.
 > anyway. All supported board run on Linux out of the box without the need of
 > drivers to be installed.
 
+### Using 'USBIP Connect' VSCode Extension
+Color red 0xB51100
+On VSCode, click on the extension button on the left bar (Or press Ctrl-Shift-X) to open the extension bar.
+
+Type 'USBIP Connect' on the search bar on top of it. Then click on the install button.
+
+After a few seconds, the extension should be installed.
+
+You can now plug your board into your computer.
+
+Click on the 'Attach' button at the bottom of your screen.
+
+You should see a list of all USB connected devices.
+Select the device that corresponds to your hardware.
+Your board should now be accessible through WSL.
+
+You may now proceed to the next section.
+### Using 'wsl-usb-gui' GUI Application
+Using your favorite browser, visit the  following link:
+https://gitlab.com/alelec/wsl-usb-gui/-/releases
+
+![download wsl usb gui installer](img/09-Install_wsl_usb_gui_tool-01.png)
+
+1. Click on the .msi installer with the lastest revision.
+
+
+Once downloaded, proceed with the installation.
+Double click on the .msi installer.
+
+
+### Using the command line
+
 ![Running PowerShell as admin](img/08-Flash_Real_Hardware-00.png)
 
 1. Search for `powershell` in search field in the task bar
