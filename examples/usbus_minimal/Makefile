@@ -11,7 +11,7 @@ RIOTBASE ?= $(CURDIR)/../..
 # which is not needed in a production environment but helps in the
 # development process:
 DEVELHELP ?= 1
-
+CFLAGS += -DDEBUG_VERBOSE_ASSERT
 USEMODULE += usbus
 USEMODULE += auto_init_usbus
 

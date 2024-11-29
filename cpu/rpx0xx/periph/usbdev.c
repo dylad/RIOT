@@ -506,7 +506,7 @@ static void _usbdev_ep_init(usbdev_ep_t *ep)
     hw_ep->data_buf = NULL;
     hw_ep->data_buf_size = 0UL;
     hw_ep->data_cnt = 0UL;
-    hw_ep->next_pid = 1U;
+    hw_ep->next_pid = 0U;
 }
 
 static void _ep_enable(usbdev_ep_t *ep) {
@@ -670,18 +670,25 @@ static void _usbdev_setup_sync(void)
     assert(hw_ep->data_buf_size >= USB_SETUP_PKT_LEN);
     memcpy(hw_ep->data_buf, USB_BUFFER_SETUP_PKT_START, USB_SETUP_PKT_LEN);
     hw_ep->data_buf = NULL;
+    /* Force PID 1 before preparing answer */
+    hw_ep->next_pid = !hw_ep->next_pid;
     uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep, 0ul);
     buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_LAST_0_Msk;
     _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg, ~0x00UL);
+    /*busy_wait_at_least_cycles(12);
+    buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk;
+    _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg , ~0x00UL);*/
+    
     _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_TR_COMPLETE);
 }
 
 static void _usbdev_buffer_sync(usbdev_ep_t *ep)
 {
     rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
-    DEBUG("[rpx0xx usb] Call _usbdev_buffer_sync(ep.num=%d, ep.dir=%s), buf=%p, len=%u",
+    DEBUG("[rpx0xx usb] Call _usbdev_buffer_sync(ep.num=%d, ep.dir=%s), buf=%p, len=%u\n",
               hw_ep->ep.num, PRINT_DIR(hw_ep->ep.dir), hw_ep->data_buf, hw_ep->data_buf_size);
     size_t available = _ep_get_available(&hw_ep->ep);
+    DEBUG("[rpx0xx usb]: get available %d bytes\n", available);
     if (hw_ep->data_buf == NULL) {
         DEBUG(" tr completed\n");
         _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_TR_COMPLETE);
@@ -694,9 +701,11 @@ static void _usbdev_buffer_sync(usbdev_ep_t *ep)
     assert(bufptr <= hw_ep->data_buf + hw_ep->data_buf_size);
     if (hw_ep->ep.dir == USB_EP_DIR_IN) {
         memcpy(hw_ep->dpram_buf, bufptr, n);
+        //hw_ep->next_pid = !hw_ep->next_pid;
     } else {
         memcpy(bufptr, hw_ep->dpram_buf, n);
     }
+    
     uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep, n);
     if (hw_ep->data_cnt == hw_ep->data_buf_size) {
         DEBUG(" first");
@@ -710,7 +719,11 @@ static void _usbdev_buffer_sync(usbdev_ep_t *ep)
 
     }
     DEBUG("\n");
+    DEBUG("[rpx0xx usb]: control buf writing: 0x%lx\n", buf_ctrl_reg);
     _ep_buf_ctrl_reg_write(ep->num, ep->dir, buf_ctrl_reg, ~0x00UL);
+       /* busy_wait_at_least_cycles(12);
+    buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk;
+    _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg , ~0x00UL);*/
 }
 
 static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
@@ -793,6 +806,7 @@ static void _usbdev_esr(usbdev_t *dev)
     }
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_TRANS_COMPLETE_Msk) {
         /* last buffer has been transmitted */
+        DEBUG_PUTS("TRANSFER COMPLETE DONE!!!!!!!!");
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
                             USBCTRL_REGS_SIE_STATUS_TRANS_COMPLETE_Msk);
     }
@@ -824,6 +838,9 @@ static void _usbdev_ep_esr(usbdev_ep_t *ep)
 
 void isr_usbctrl(void)
 {
+    DEBUG_PUTS("ISR_USB");
+        DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
+              USBCTRL_REGS->SIE_STATUS);
     if (USBCTRL_REGS->BUFF_STATUS || USBCTRL_REGS->EP_STATUS_STALL_NAK) {
         /* Endpoint specific interrupt */
         for (uint8_t i = 0; i < USBDEV_NUM_ENDPOINTS * 2; i++) {
