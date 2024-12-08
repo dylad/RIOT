@@ -30,6 +30,7 @@
 #include "platform.h"
 
 #include "cpu_conf.h"
+#include "busy_wait.h"
 
 #define ENABLE_DEBUG 1
 #include "debug.h"
@@ -210,7 +211,6 @@ static inline void _ep_ctrl_reg_write(uint8_t ep_num, usb_ep_dir_t dir,
 {
     __IOM uint32_t *reg = _get_ep_ctrl_reg(ep_num, dir);
     io_reg_write_dont_corrupt(reg, value, mask);
-    busy_wait_at_least_cycles(12);
 }
 
 /** See @io_reg_write_dont_corrupt() */
@@ -219,7 +219,6 @@ static inline void _ep_buf_ctrl_reg_write(uint8_t ep_num, usb_ep_dir_t dir,
 {
     __IOM uint32_t *reg = _get_ep_buf_ctrl_reg(ep_num, dir);
     io_reg_write_dont_corrupt(reg, value, mask);
-    busy_wait_at_least_cycles(12);
 }
 
 /* Get DPRAM buffer offset. */
@@ -279,6 +278,7 @@ static void _enable_irq(void) {
                       USBCTRL_REGS_INTE_BUS_RESET_Msk |
                       USBCTRL_REGS_INTE_DEV_SUSPEND_Msk |
                       USBCTRL_REGS_INTE_SETUP_REQ_Msk |
+                      USBCTRL_REGS_INTE_TRANS_COMPLETE_Msk |
                       /*USBCTRL_REGS_INTE_DEV_CONN_DIS_Msk |*/
                       USBCTRL_REGS_INTE_BUFF_STATUS_Msk/* |
                       USBCTRL_REGS_INTE_DEV_SOF_Msk*/);
@@ -290,6 +290,7 @@ static void _disable_irq(void) {
                         USBCTRL_REGS_INTE_BUS_RESET_Msk |
                         USBCTRL_REGS_INTE_DEV_SUSPEND_Msk |
                         USBCTRL_REGS_INTE_SETUP_REQ_Msk |
+                        USBCTRL_REGS_INTE_TRANS_COMPLETE_Msk |
                         /*USBCTRL_REGS_INTE_DEV_CONN_DIS_Msk |*/
                         USBCTRL_REGS_INTE_BUFF_STATUS_Msk/* |
                         USBCTRL_REGS_INTE_DEV_SOF_Msk*/);
@@ -300,7 +301,7 @@ static void _usbdev_init(usbdev_t *dev)
     (void)dev;
     DEBUG("[rpx0xx usb] Call _usbdev_init()\n");
 
-    memset(USBCTRL_DPRAM, 0, sizeof(USBCTRL_DPRAM_Type));
+    memset(USBCTRL_DPRAM, 0xFF, sizeof(USBCTRL_DPRAM_Type));
     memset(USBCTRL_REGS, 0, sizeof(USBCTRL_REGS_Type));
 
     _poweron();
@@ -409,8 +410,8 @@ static void _ep_dpram_alloc(rpx0xx_usb_ep_t *ep, size_t size)
             core_panic(PANIC_MEM_MANAGE, "[rpx0xx usb] available DPRAM space exceeded");
         }
 
-        DEBUG("[rpx0xx usb] Allocated %d bytes at offset 0x%x (0x%p)\n",
-            size, dpram_offset, ep->dpram_buf);
+        DEBUG("[rpx0xx usb] Allocated %d bytes at offset 0x%x (0x%p) for EP%x:%s\n",
+            size, dpram_offset, ep->dpram_buf, ep->ep.num, PRINT_DIR(ep->ep.dir));
 
         switch (ep->ep.type) {
         case USB_EP_TYPE_INTERRUPT:
@@ -526,8 +527,8 @@ static void _ep_disable(usbdev_ep_t *ep) {
 
 static void _ep_set_stall(usbdev_ep_t *ep, usbopt_enable_t enable)
 {
-    rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
-    hw_ep->next_pid = 0u;
+    //rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
+    //hw_ep->next_pid = 0u;
     if (ep->num == 0) {
         uint32_t bit = (ep->dir == USB_EP_DIR_IN) ?
                         USBCTRL_REGS_EP_STALL_ARM_EP0_IN_Msk 
@@ -654,28 +655,33 @@ static uint32_t _prepare_ep_buf_ctrl(rpx0xx_usb_ep_t *hw_ep, size_t len)
     uint32_t reg = 
         (len & USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_LENGTH_0_Msk)
         | buf_filled_bit
-        | pid_bit
-        | USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk;
+        | pid_bit;
     return reg;
 }
 
 static void _usbdev_setup_sync(void)
 {
     rpx0xx_usb_ep_t *hw_ep = _get_ep(0, USB_EP_DIR_OUT);
+    rpx0xx_usb_ep_t *hw_epin = _get_ep(0, USB_EP_DIR_IN);
     DEBUG("[rpx0xx usb] Call _usbdev_setup_sync(), buf=%p, len=%u\n",
               hw_ep->data_buf, hw_ep->data_buf_size);
-    if (hw_ep->data_buf == NULL) {
-        return;
-    }
+
     assert(hw_ep->data_buf_size >= USB_SETUP_PKT_LEN);
     memcpy(hw_ep->data_buf, USB_BUFFER_SETUP_PKT_START, USB_SETUP_PKT_LEN);
-    hw_ep->data_buf = NULL;
+    //hw_ep->data_buf = NULL;
     /* Force PID 1 before preparing answer */
-    hw_ep->next_pid = !hw_ep->next_pid;
+    //hw_ep->next_pid = 1;
+    DEBUG("[rpx0xx usb]: SIE_CTRL:%lx\n", USBCTRL_REGS->SIE_CTRL);
+    DEBUG_PUTS("[rpx0xx usb]: reset both EP0");
+    _ep_buf_ctrl_reg_write(0, USB_EP_DIR_IN, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk, 0xFFFF);
+    _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk, 0xFFFF);
+    DEBUG_PUTS("[rpx0xx usb]: Forcing PID to 1");
+    hw_epin->next_pid = 1;
+    /*busy_wait_at_least_cycles(50);
     uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep, 0ul);
     buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_LAST_0_Msk;
     _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg, ~0x00UL);
-    /*busy_wait_at_least_cycles(12);
+    busy_wait_at_least_cycles(12);
     buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk;
     _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg , ~0x00UL);*/
     
@@ -685,27 +691,34 @@ static void _usbdev_setup_sync(void)
 static void _usbdev_buffer_sync(usbdev_ep_t *ep)
 {
     rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
+    size_t available = 0;
+
     DEBUG("[rpx0xx usb] Call _usbdev_buffer_sync(ep.num=%d, ep.dir=%s), buf=%p, len=%u\n",
               hw_ep->ep.num, PRINT_DIR(hw_ep->ep.dir), hw_ep->data_buf, hw_ep->data_buf_size);
-    size_t available = _ep_get_available(&hw_ep->ep);
+    DEBUG_PUTS("Wait for buffer avail");
+    do {
+        /* Wait for buffer to be available */
+        available = _ep_get_available(&hw_ep->ep);
+    } while (!available);
+
     DEBUG("[rpx0xx usb]: get available %d bytes\n", available);
-    if (hw_ep->data_buf == NULL) {
-        DEBUG(" tr completed\n");
-        _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_TR_COMPLETE);
-        return;
-    }
+    DEBUG("[rpx0xx usb]: next_pid %d\n", hw_ep->next_pid);
+
+    memset(hw_ep->dpram_buf, 0xFF, 128);
     size_t n = (available < hw_ep->data_cnt) ? available : hw_ep->data_cnt;
-    uint8_t *bufptr = hw_ep->data_buf + hw_ep->data_buf_size - hw_ep->data_cnt;
+    uint8_t *bufptr = hw_ep->data_buf + (hw_ep->data_buf_size - hw_ep->data_cnt);
     assert(n <= hw_ep->data_cnt);
     assert(bufptr >= hw_ep->data_buf);
     assert(bufptr <= hw_ep->data_buf + hw_ep->data_buf_size);
+    DEBUG("Copy %d bytes to hardware buffer\n", n);
+    DEBUG("[rpx0xx usb] dpram buffer 0x%p for EP%x:%s\n", hw_ep->dpram_buf, ep->num, PRINT_DIR(ep->dir));
     if (hw_ep->ep.dir == USB_EP_DIR_IN) {
         memcpy(hw_ep->dpram_buf, bufptr, n);
         //hw_ep->next_pid = !hw_ep->next_pid;
     } else {
         memcpy(bufptr, hw_ep->dpram_buf, n);
     }
-    
+    DEBUG("EP0:%d ctrl reg:%lx\n", ep->dir, *_get_ep_buf_ctrl_reg(ep->num, ep->dir));
     uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep, n);
     if (hw_ep->data_cnt == hw_ep->data_buf_size) {
         DEBUG(" first");
@@ -714,16 +727,17 @@ static void _usbdev_buffer_sync(usbdev_ep_t *ep)
     hw_ep->data_cnt -= n;
     if (hw_ep->data_cnt == 0) {
         DEBUG(" last");
-        hw_ep->data_buf = NULL;
+        //hw_ep->data_buf = NULL;
         buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_LAST_0_Msk;
 
     }
     DEBUG("\n");
+    //DEBUG("[rpx0xx usb]: control buf writing: 0x%lx\n", buf_ctrl_reg);
+    _ep_buf_ctrl_reg_write(ep->num, ep->dir, buf_ctrl_reg, 0xFFFFUL);
+    busy_wait(200);
+    _ep_buf_ctrl_reg_write(ep->num, ep->dir, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk);
     DEBUG("[rpx0xx usb]: control buf writing: 0x%lx\n", buf_ctrl_reg);
-    _ep_buf_ctrl_reg_write(ep->num, ep->dir, buf_ctrl_reg, ~0x00UL);
-       /* busy_wait_at_least_cycles(12);
-    buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk;
-    _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg , ~0x00UL);*/
+    DEBUG("EP0:%d ctrl reg:%lx\n", ep->dir, *_get_ep_buf_ctrl_reg(ep->num, ep->dir));
 }
 
 static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
@@ -734,7 +748,7 @@ static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
           ep->num, PRINT_DIR(ep->dir), buf, len);
 
     assert(buf != NULL);
-    assert(hw_ep->data_buf == NULL);
+    //assert(hw_ep->data_buf == NULL);
     
     hw_ep->data_buf = buf;
     hw_ep->data_buf_size = len;
@@ -786,8 +800,8 @@ static void _usbdev_esr(usbdev_t *dev)
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_SETUP_REQ_Msk) {
         /* Setup Request received on EP0 */
         DEBUG("[rpx0xx usb] Got setup request\n");
-        DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
-              USBCTRL_REGS->SIE_STATUS);
+       /* DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
+              USBCTRL_REGS->SIE_STATUS);*/
         _usbdev_setup_sync();
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
                             USBCTRL_REGS_SIE_STATUS_SETUP_REC_Msk);
@@ -806,7 +820,7 @@ static void _usbdev_esr(usbdev_t *dev)
     }
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_TRANS_COMPLETE_Msk) {
         /* last buffer has been transmitted */
-        DEBUG_PUTS("TRANSFER COMPLETE DONE!!!!!!!!");
+        DEBUG("XFER DONE: %lx", USBCTRL_REGS->BUFF_CPU_SHOULD_HANDLE);
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
                             USBCTRL_REGS_SIE_STATUS_TRANS_COMPLETE_Msk);
     }
@@ -820,27 +834,28 @@ static void _usbdev_esr(usbdev_t *dev)
 
 static void _usbdev_ep_esr(usbdev_ep_t *ep)
 {
-    rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
+   // rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
     if (_reg_get_flag_for_ep(&USBCTRL_REGS->BUFF_STATUS, ep)) {
         DEBUG("[rpx0xx usb] Buffer ready to sync\n");
         _reg_clear_flag_for_ep(&USBCTRL_REGS->BUFF_STATUS, ep);
-        _usbdev_buffer_sync(ep);
+       // _usbdev_buffer_sync(ep);
+       ep->dev->epcb(ep, USBDEV_EVENT_TR_COMPLETE);
     }
     if (_reg_get_flag_for_ep(&USBCTRL_REGS->EP_STATUS_STALL_NAK, ep)) {
         DEBUG("[rpx0xx usb] Got stall nak\n");
         _reg_clear_flag_for_ep(&USBCTRL_REGS->EP_STATUS_STALL_NAK, ep);
         ep->dev->epcb(ep, USBDEV_EVENT_TR_STALL);
     }
-    if (hw_ep->data_buf != NULL) {
+   // if (hw_ep->data_buf != NULL) {
         _enable_ep_irq(ep);
-    }
+    //}
 }
 
 void isr_usbctrl(void)
 {
-    DEBUG_PUTS("ISR_USB");
+    /*DEBUG_PUTS("ISR_USB");
         DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
-              USBCTRL_REGS->SIE_STATUS);
+              USBCTRL_REGS->SIE_STATUS);*/
     if (USBCTRL_REGS->BUFF_STATUS || USBCTRL_REGS->EP_STATUS_STALL_NAK) {
         /* Endpoint specific interrupt */
         for (uint8_t i = 0; i < USBDEV_NUM_ENDPOINTS * 2; i++) {
