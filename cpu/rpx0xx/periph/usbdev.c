@@ -707,6 +707,10 @@ static void _usbdev_buffer_sync(usbdev_ep_t *ep)
     }
     DEBUG("\n");
     _ep_buf_ctrl_reg_write(ep->num, ep->dir, buf_ctrl_reg, ~0x00UL);
+    busy_wait_at_least_cycles(12);
+    buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_AVAILABLE_0_Msk;
+    _ep_buf_ctrl_reg_write(ep->num, ep->dir, buf_ctrl_reg, 0x0000FFFFUL);
+
 }
 
 static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
@@ -769,8 +773,8 @@ static void _usbdev_esr(usbdev_t *dev)
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_SETUP_REQ_Msk) {
         /* Setup Request received on EP0 */
         DEBUG("[rpx0xx usb] Got setup request\n");
-        DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
-              USBCTRL_REGS->SIE_STATUS);
+        /*DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
+              USBCTRL_REGS->SIE_STATUS);*/
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
                             USBCTRL_REGS_SIE_STATUS_SETUP_REC_Msk);
         _usbdev_setup_sync();
@@ -814,9 +818,7 @@ static void _usbdev_ep_esr(usbdev_ep_t *ep)
         _reg_clear_flag_for_ep(&USBCTRL_REGS->EP_STATUS_STALL_NAK, ep);
         ep->dev->epcb(ep, USBDEV_EVENT_TR_STALL);
     }
-    if (hw_ep->data_buf != NULL) {
-        _enable_ep_irq(ep);
-    }
+    _enable_ep_irq(ep);
 }
 
 void isr_usbctrl(void)
