@@ -807,7 +807,7 @@ static void _usbdev_esr(usbdev_t *dev)
 
 static void _usbdev_ep_esr(usbdev_ep_t *ep)
 {
-    rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
+    //rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
     if (_reg_get_flag_for_ep(&USBCTRL_REGS->BUFF_STATUS, ep)) {
         /* Notify USBUS Stack about buffer new status */
         _reg_clear_flag_for_ep(&USBCTRL_REGS->BUFF_STATUS, ep);
@@ -823,6 +823,40 @@ static void _usbdev_ep_esr(usbdev_ep_t *ep)
 
 void isr_usbctrl(void)
 {
+    uint32_t reg = 0;
+    uint32_t isr_handled = 0;
+
+    if (USBCTRL_REGS->INTS) {
+        /* Store locally all IRQs to be handled */
+        isr_handled = USBCTRL_REGS->INTS;
+    }
+
+    if (USBCTRL_REGS->BUFF_STATUS) {
+        reg = USBCTRL_REGS->BUFF_STATUS;
+        while (reg) {
+            uint8_t i = __builtin_ctz(reg);
+            rpx0xx_usb_ep_t* hw_ep = &_hw_usb_dev.hw_ep[i];
+            _disable_ep_irq(&hw_ep->ep);
+            _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_ESR);
+            reg &= ~i;
+        }
+        /* Clear locally the associate bit */
+        isr_handled &= ~USBCTRL_REGS_INTS_BUFF_STATUS_Msk;
+    }
+
+    if (USBCTRL_REGS->EP_STATUS_STALL_NAK) {
+        reg = USBCTRL_REGS->EP_STATUS_STALL_NAK;
+        while (reg) {
+            uint8_t i = __builtin_ctz(reg);
+            rpx0xx_usb_ep_t* hw_ep = &_hw_usb_dev.hw_ep[i];
+            _disable_ep_irq(&hw_ep->ep);
+            _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_ESR);
+            reg &= ~i;
+        }
+        /* Clear locally the associate bit */
+        isr_handled &= ~USBCTRL_REGS_INTS_EP_STALL_NAK_Msk;
+    }
+#if 0
     if (USBCTRL_REGS->BUFF_STATUS || USBCTRL_REGS->EP_STATUS_STALL_NAK) {
         /* Endpoint specific interrupt */
         for (uint8_t i = 0; i < USBDEV_NUM_ENDPOINTS * 2; i++) {
@@ -834,9 +868,11 @@ void isr_usbctrl(void)
             }
         }
     }
-    if (USBCTRL_REGS->INTS) {
+#endif
+    /* Handle all other IRQs here */
+    if (isr_handled) {
         /* Device specific interrupt */
-        _hw_usb_dev.int_status = USBCTRL_REGS->INTS;
+        _hw_usb_dev.int_status = isr_handled;
         _disable_irq();
         _hw_usb_dev.dev.cb(&_hw_usb_dev.dev, USBDEV_EVENT_ESR);
     }
