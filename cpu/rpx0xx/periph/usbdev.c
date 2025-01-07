@@ -180,7 +180,6 @@ static inline bool _reg_get_flag_for_ep(__IOM uint32_t *reg, usbdev_ep_t *ep)
 /* Clear the ep-related bit from a status register. */
 static inline void _reg_clear_flag_for_ep(__IOM uint32_t *reg, usbdev_ep_t *ep)
 {
-    printf("CLR BIT FOR EP%d (%s)\n", ep->num, PRINT_DIR(ep->dir));
     io_reg_atomic_clear(reg, 
                         1 << (2 * ep->num + (ep->dir == USB_EP_DIR_IN ? 0 : 1)));
 }
@@ -279,6 +278,12 @@ static void _enable_irq(uint32_t mask) {
                       USBCTRL_REGS_INTE_BUS_RESET_Msk |
                       /*USBCTRL_REGS_INTE_DEV_SUSPEND_Msk |*/
                       USBCTRL_REGS_INTE_SETUP_REQ_Msk |
+                      USBCTRL_REGS_INTS_TRANS_COMPLETE_Msk |
+                      USBCTRL_REGS_INTE_ERROR_DATA_SEQ_Msk |
+                      USBCTRL_REGS_INTE_ERROR_RX_TIMEOUT_Msk |
+                      USBCTRL_REGS_INTE_ERROR_RX_OVERFLOW_Msk |
+                      USBCTRL_REGS_INTE_ERROR_BIT_STUFF_Msk |
+                      USBCTRL_REGS_INTE_ERROR_CRC_Msk |
                       /*USBCTRL_REGS_INTE_DEV_CONN_DIS_Msk |*/
                       mask
                       /* |
@@ -290,7 +295,8 @@ static void _disable_irq(void) {
     io_reg_atomic_clear(&USBCTRL_REGS->INTE,
                         USBCTRL_REGS_INTE_BUS_RESET_Msk |
                         /*USBCTRL_REGS_INTE_DEV_SUSPEND_Msk |*/
-                        USBCTRL_REGS_INTE_SETUP_REQ_Msk
+                        USBCTRL_REGS_INTE_SETUP_REQ_Msk |
+                        USBCTRL_REGS_INTS_TRANS_COMPLETE_Msk
                         /*USBCTRL_REGS_INTE_DEV_CONN_DIS_Msk |*/
                         /* |
                         USBCTRL_REGS_INTE_DEV_SOF_Msk*/);
@@ -339,8 +345,15 @@ static int _usbdev_get(usbdev_t *dev, usbopt_t opt,
 static void _set_address(uint8_t addr)
 {
     DEBUG("[rpx0xx usb] Call _set_address(addr=%x)\n", addr);
-    io_reg_atomic_set(&USBCTRL_REGS->ADDR_ENDP,
-                      addr & USBCTRL_REGS_ADDR_ENDP_ADDRESS_Msk);
+    if (addr) {
+        io_reg_atomic_set(&USBCTRL_REGS->ADDR_ENDP,
+                          addr & USBCTRL_REGS_ADDR_ENDP_ADDRESS_Msk);
+    }
+    else {
+        io_reg_atomic_clear(&USBCTRL_REGS->ADDR_ENDP,
+                            USBCTRL_REGS_ADDR_ENDP_ADDRESS_Msk);
+    }
+    DEBUG("ADDRESS IS NOW:0x%lx\n", USBCTRL_REGS->ADDR_ENDP);
 }
 
 static void _usb_attach(void)
@@ -473,7 +486,7 @@ static usbdev_ep_t *_usbdev_new_ep(usbdev_t *dev, usb_ep_type_t type,
 
     return &hw_ep->ep;
 }
-
+/*
 static void _enable_ep_irq(usbdev_ep_t *ep) {
     if (ep->num != 0) {
         uint32_t flags = USBCTRL_DPRAM_EP1_IN_CONTROL_INTERRUPT_PER_BUFF_Msk
@@ -494,7 +507,7 @@ static void _disable_ep_irq(usbdev_ep_t *ep) {
         uint32_t flags = USBCTRL_REGS_SIE_CTRL_EP0_INT_1BUF_Msk;
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_CTRL, flags);
     }
-}
+}*/
 
 static void _usbdev_ep_init(usbdev_ep_t *ep)
 {
@@ -665,7 +678,7 @@ static void _usbdev_setup_sync(void)
 
     assert(hw_ep_out->data_buf_size >= USB_SETUP_PKT_LEN);
     memcpy(hw_ep_out->data_buf, USB_BUFFER_SETUP_PKT_START, USB_SETUP_PKT_LEN);
-    hw_ep_out->next_pid = 1;
+    //hw_ep_out->next_pid = 1;
     hw_ep_in->next_pid = 1;
 #if 0
     uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep, 0ul);
@@ -722,20 +735,24 @@ static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
     DEBUG("[rpx0xx usb] Call _usbdev_ep_xmit(ep.num=%d, ep.dir=%s, buf=%p, len=%u)\n",
           ep->num, PRINT_DIR(ep->dir), buf, len);
 
-    assert(buf != NULL);
+    //assert(buf != NULL);
     //assert(hw_ep->data_buf == NULL);
     
     hw_ep->data_buf = buf;
     hw_ep->data_buf_size = len;
     hw_ep->data_cnt = len;
 
-    _ep_set_stall(ep, 0);
+    
 
     if (ep->dir == USB_EP_DIR_IN) {
+        _ep_set_stall(ep, 0);
         _usbdev_buffer_sync(ep);
+    } else {
+        DEBUG("INTS:0x%lx  INTE:%lx\n", USBCTRL_REGS->INTS, USBCTRL_REGS->INTE);
+        DEBUG("SIESTATUS:0x%lx\n",  USBCTRL_REGS->SIE_STATUS);
     }
 
-    _enable_ep_irq(ep);
+    //_enable_ep_irq(ep);
 
     return 0;
 }
@@ -780,9 +797,9 @@ static void _usbdev_esr(usbdev_t *dev)
         DEBUG("ESR SETUP REQ\n");
         /*DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
               USBCTRL_REGS->SIE_STATUS);*/
+        _usbdev_setup_sync();
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
                             USBCTRL_REGS_SIE_STATUS_SETUP_REC_Msk);
-        _usbdev_setup_sync();
 
     }
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_DEV_CONN_DIS_Msk) {
@@ -805,7 +822,7 @@ static void _usbdev_esr(usbdev_t *dev)
                             USBCTRL_REGS_SIE_STATUS_TRANS_COMPLETE_Msk);
     }
     /* all interrupts should be now cleared */
-    DEBUG("END ESR with:%lx vs %lx\n", _hw_usb_dev.int_status,USBCTRL_REGS->INTS);
+    //DEBUG("END ESR with:%lx vs %lx\n", _hw_usb_dev.int_status,USBCTRL_REGS->INTS);
     _hw_usb_dev.int_status = USBCTRL_REGS->INTS;
     if (_hw_usb_dev.int_status) {
         DEBUG("[rpx0xx usb] Unhandled interrupt, INTS=%lx \n", _hw_usb_dev.int_status);
@@ -826,7 +843,8 @@ static void _usbdev_ep_esr(usbdev_ep_t *ep)
         _reg_clear_flag_for_ep(&USBCTRL_REGS->EP_STATUS_STALL_NAK, ep);
         ep->dev->epcb(ep, USBDEV_EVENT_TR_STALL);
     }
-    _enable_ep_irq(ep);
+    //_enable_ep_irq(ep);
+    //DEBUG("RE ENABLE BUFF_STATUS IRQ!!!!\n");
     io_reg_atomic_set(&USBCTRL_REGS->INTE, USBCTRL_REGS_INTE_BUFF_STATUS_Msk);
 }
 
@@ -836,26 +854,25 @@ void isr_usbctrl(void)
     uint32_t isr_handled = 0;
 
     if (USBCTRL_REGS->INTS) {
+        DEBUG("SIESTATUSISR:0x%lx\n",  USBCTRL_REGS->SIE_STATUS);
         /* Store locally all IRQs to be handled */
         isr_handled = USBCTRL_REGS->INTS;
-        printf("ISR:%lx\n", isr_handled);
+        DEBUG("ISR:%lx\n", isr_handled);
     }
 
     if (USBCTRL_REGS->BUFF_STATUS) {
-        printf("BUFF_STATUS1:%lx\n", USBCTRL_REGS->BUFF_STATUS);
+        DEBUG("BUFF_STATUS:%lx\n", USBCTRL_REGS->BUFF_STATUS);
         reg = USBCTRL_REGS->BUFF_STATUS;
         
         while (reg) {
             uint8_t i = 31 - __builtin_clz(reg);
-            printf("idx:%d\n", i);
             rpx0xx_usb_ep_t* hw_ep = &_hw_usb_dev.hw_ep[i];
-            _disable_ep_irq(&hw_ep->ep);
+            //_disable_ep_irq(&hw_ep->ep);
             _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_ESR);
             _reg_clear_flag_for_ep(&USBCTRL_REGS->BUFF_STATUS, &hw_ep->ep);
             reg &= ~(1 << i);
         }
         /* Clear locally the associate bit */
-        printf("BUFF_STATUS2:%lx\n", USBCTRL_REGS->BUFF_STATUS);
         isr_handled &= ~USBCTRL_REGS_INTS_BUFF_STATUS_Msk;
     }
 
@@ -864,7 +881,7 @@ void isr_usbctrl(void)
         while (reg) {
             uint8_t i = 31 - __builtin_clz(reg);
             rpx0xx_usb_ep_t* hw_ep = &_hw_usb_dev.hw_ep[i];
-            _disable_ep_irq(&hw_ep->ep);
+            //_disable_ep_irq(&hw_ep->ep);
             _hw_usb_dev.dev.epcb(&hw_ep->ep, USBDEV_EVENT_ESR);
             reg &= ~(1 << i);
         }
@@ -886,12 +903,15 @@ void isr_usbctrl(void)
 #endif
     /* Handle all other IRQs here */
     if (isr_handled) {
+        /*if (isr_handled & USBCTRL_REGS_INTS_TRANS_COMPLETE_Msk) {
+                io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
+                            USBCTRL_REGS_SIE_STATUS_TRANS_COMPLETE_Msk);*/
         /* Device specific interrupt */
         _hw_usb_dev.int_status = isr_handled;
         _disable_irq();
         _hw_usb_dev.dev.cb(&_hw_usb_dev.dev, USBDEV_EVENT_ESR);
     }
-    printf("ISR REMAINING:%lx\n", USBCTRL_REGS->INTS);
+
     cortexm_isr_end();
 }
 

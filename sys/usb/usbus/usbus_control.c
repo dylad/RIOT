@@ -257,7 +257,7 @@ static int _recv_dev_setup(usbus_t *usbus, usb_setup_t *pkt)
     else {
         switch (pkt->request) {
             case USB_SETUP_REQ_SET_ADDRESS:
-                DEBUG("usbus_control: Setting address\n");
+                printf("usbus_control: Setting address:0x%x\n", (uint8_t)pkt->value);
                 usbus->addr = (uint8_t)pkt->value;
                 if (!USBDEV_CPU_SET_ADDR_AFTER_STATUS) {
                     usbdev_set(usbus->dev, USBOPT_ADDRESS, &usbus->addr,
