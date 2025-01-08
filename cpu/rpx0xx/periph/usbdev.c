@@ -16,6 +16,7 @@
  * @}
  */
 
+#include "vendor/RP2040.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -344,7 +345,7 @@ static int _usbdev_get(usbdev_t *dev, usbopt_t opt,
 
 static void _set_address(uint8_t addr)
 {
-    DEBUG("[rpx0xx usb] Call _set_address(addr=%x)\n", addr);
+    //DEBUG("[rpx0xx usb] Call _set_address(addr=%x)\n", addr);
     if (addr) {
         io_reg_atomic_set(&USBCTRL_REGS->ADDR_ENDP,
                           addr & USBCTRL_REGS_ADDR_ENDP_ADDRESS_Msk);
@@ -661,6 +662,7 @@ static uint32_t _prepare_ep_buf_ctrl(rpx0xx_usb_ep_t *hw_ep, size_t len)
         buf_filled_bit = USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_FULL_0_Msk;
     }
     uint32_t pid_bit = hw_ep->next_pid ? USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk : 0;
+    DEBUG(" PID%d ",hw_ep->next_pid);
     hw_ep->next_pid = !hw_ep->next_pid;
     uint32_t reg = 
         (len & USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_LENGTH_0_Msk)
@@ -678,10 +680,12 @@ static void _usbdev_setup_sync(void)
 
     assert(hw_ep_out->data_buf_size >= USB_SETUP_PKT_LEN);
     memcpy(hw_ep_out->data_buf, USB_BUFFER_SETUP_PKT_START, USB_SETUP_PKT_LEN);
-    //hw_ep_out->next_pid = 1;
+    hw_ep_out->next_pid = 1;
     hw_ep_in->next_pid = 1;
-#if 0
-    uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep, 0ul);
+    _ep_buf_ctrl_reg_write(hw_ep_in->ep.num, hw_ep_in->ep.dir, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_RESET_Msk | USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_RESET_Msk | USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk);
+    _ep_buf_ctrl_reg_write(hw_ep_out->ep.num, hw_ep_out->ep.dir, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_RESET_Msk | USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk, USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_RESET_Msk | USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_PID_0_Msk);
+#if 1
+    uint32_t buf_ctrl_reg = _prepare_ep_buf_ctrl(hw_ep_out, 0ul);
     buf_ctrl_reg |= USBCTRL_DPRAM_EP0_IN_BUFFER_CONTROL_LAST_0_Msk;
     _ep_buf_ctrl_reg_write(0, USB_EP_DIR_OUT, buf_ctrl_reg, ~0x00UL);
     /* Wait for a few CPU cycles before setting available bit */
@@ -732,8 +736,8 @@ static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
 {
     rpx0xx_usb_ep_t *hw_ep = _get_ep(ep->num, ep->dir);
 
-    DEBUG("[rpx0xx usb] Call _usbdev_ep_xmit(ep.num=%d, ep.dir=%s, buf=%p, len=%u)\n",
-          ep->num, PRINT_DIR(ep->dir), buf, len);
+   /* DEBUG("[rpx0xx usb] Call _usbdev_ep_xmit(ep.num=%d, ep.dir=%s, buf=%p, len=%u)\n",
+          ep->num, PRINT_DIR(ep->dir), buf, len);*/
 
     //assert(buf != NULL);
     //assert(hw_ep->data_buf == NULL);
@@ -748,8 +752,8 @@ static int _usbdev_ep_xmit(usbdev_ep_t *ep, uint8_t *buf, size_t len)
         _ep_set_stall(ep, 0);
         _usbdev_buffer_sync(ep);
     } else {
-        DEBUG("INTS:0x%lx  INTE:%lx\n", USBCTRL_REGS->INTS, USBCTRL_REGS->INTE);
-        DEBUG("SIESTATUS:0x%lx\n",  USBCTRL_REGS->SIE_STATUS);
+        //DEBUG("INTS:0x%lx  INTE:%lx\n", USBCTRL_REGS->INTS, USBCTRL_REGS->INTE);
+        //DEBUG("SIESTATUS:0x%lx\n",  USBCTRL_REGS->SIE_STATUS);
     }
 
     //_enable_ep_irq(ep);
@@ -794,7 +798,6 @@ static void _usbdev_esr(usbdev_t *dev)
     }
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_SETUP_REQ_Msk) {
         /* Setup Request received on EP0 */
-        DEBUG("ESR SETUP REQ\n");
         /*DEBUG("[rpx0xx usb] SIE_STATUS=%lx\n",
               USBCTRL_REGS->SIE_STATUS);*/
         _usbdev_setup_sync();
@@ -817,7 +820,6 @@ static void _usbdev_esr(usbdev_t *dev)
     }
     if (_hw_usb_dev.int_status & USBCTRL_REGS_INTS_TRANS_COMPLETE_Msk) {
         /* last buffer has been transmitted */
-        DEBUG_PUTS("ESR_TRCOMP");
         io_reg_atomic_clear(&USBCTRL_REGS->SIE_STATUS,
                             USBCTRL_REGS_SIE_STATUS_TRANS_COMPLETE_Msk);
     }
@@ -854,14 +856,14 @@ void isr_usbctrl(void)
     uint32_t isr_handled = 0;
 
     if (USBCTRL_REGS->INTS) {
-        DEBUG("SIESTATUSISR:0x%lx\n",  USBCTRL_REGS->SIE_STATUS);
+        //DEBUG("SIESTATUSISR:0x%lx\n",  USBCTRL_REGS->SIE_STATUS);
         /* Store locally all IRQs to be handled */
         isr_handled = USBCTRL_REGS->INTS;
-        DEBUG("ISR:%lx\n", isr_handled);
+        //DEBUG("ISR:%lx\n", isr_handled);
     }
 
     if (USBCTRL_REGS->BUFF_STATUS) {
-        DEBUG("BUFF_STATUS:%lx\n", USBCTRL_REGS->BUFF_STATUS);
+        //DEBUG("BUFF_STATUS:%lx\n", USBCTRL_REGS->BUFF_STATUS);
         reg = USBCTRL_REGS->BUFF_STATUS;
         
         while (reg) {
