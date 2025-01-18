@@ -132,10 +132,10 @@ typedef enum {
  * @brief Available ports on the SAM3X8E
  */
 enum {
-    PA = 0,                 /**< port A */
-    PB = 1,                 /**< port B */
-    PC = 2,                 /**< port C */
-    PD = 3,                 /**< port D */
+    PA = 0,                      /**< port A */
+    PB = 1 << 0,                 /**< port B */
+    PC = 1 << 1,                 /**< port C */
+    PD = 1 << 2,                 /**< port D */
 };
 
 /**
@@ -144,6 +144,8 @@ enum {
 typedef enum {
     GPIO_MUX_A = 0,         /**< alternate function A */
     GPIO_MUX_B = 1,         /**< alternate function B */
+    GPIO_MUX_C = 2,         /**< alternate function C */
+    GPIO_MUX_D = 3,         /**< alternate function D */
 } gpio_mux_t;
 
 #ifndef DOXYGEN

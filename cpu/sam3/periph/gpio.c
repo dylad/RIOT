@@ -133,9 +133,14 @@ static inline int _port_num(gpio_t pin)
  */
 static bool _port_valid(Pio *port)
 {
-    if (port == PIOA || port == PIOB || port == PIOC || port == PIOD) {
+    if (port == PIOA || port == PIOB || port == PIOC) {
         return true;
     }
+#ifdef PIOD
+    if (port == PIOD) {
+        return true;
+    }
+#endif
     return false;
 }
 
@@ -202,8 +207,19 @@ void gpio_init_mux(gpio_t pin, gpio_mux_t mux)
     /* give peripheral control over the pin */
     _port(pin)->PIO_PDR = (1 << _pin_num(pin));
     /* and configure the MUX */
+#ifdef PIO_ABCDSR_P0
+    _port(pin)->PIO_ABCDSR[0] &= ~(1 << _pin_num(pin));
+    _port(pin)->PIO_ABCDSR[1] &= ~(1 << _pin_num(pin));
+    if (mux & 0x2) {
+        _port(pin)->PIO_ABCDSR[1] |= 1 << _pin_num(pin);
+    }
+    if (mux & 0x1) {
+        _port(pin)->PIO_ABCDSR[0] |= 1 << _pin_num(pin);
+    }
+#else
     _port(pin)->PIO_ABSR &= ~(1 << _pin_num(pin));
     _port(pin)->PIO_ABSR |=  (mux << _pin_num(pin));
+#endif 
 }
 
 void gpio_set(gpio_t pin)

@@ -1,0 +1,99 @@
+ /*
+ * Copyright (C) 2025 Mesotic SAS
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+/**
+ * @ingroup     boards_sam4s
+ * @{
+ *
+ * @file
+ * @brief       Peripheral MCU configuration for SAM4S Xplained pro
+ *
+ * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
+ */
+
+#ifndef PERIPH_CONF_H
+#define PERIPH_CONF_H
+
+#include "periph_cpu.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @name    Clock configuration
+ * @{
+ */
+/* targeted system core clock */
+#define CLOCK_CORECLOCK     (4000000UL)
+/* external oscillator clock */
+#define CLOCK_EXT_OSC       (12000000UL)
+/* define PLL configuration
+ *
+ * The values must fulfill this equation:
+ * CORECLOCK = (EXT_OCS / PLL_DIV) * (PLL_MUL + 1)
+ */
+#define CLOCK_PLL_MUL       (83)
+#define CLOCK_PLL_DIV       (12)
+
+/* number of wait states before flash read and write operations */
+#define CLOCK_FWS           (4)         /* 4 is save for 84MHz */
+/** @} */
+
+/**
+ * @name    Enable external oscillator for driving the slow clock
+ *
+ * @warning Many (older?) arduino-due boards do not have the external 32khz
+ *          oscillator soldered on, so only enable this after you make sure its
+ *          equipped on your specific board */
+#ifndef CLOCK_SCLK_XTAL
+#define CLOCK_SCLK_XTAL     (0)
+#endif
+
+/**
+ * @name    Timer peripheral configuration
+ * @{
+ */
+static const timer_conf_t timer_config[] = {
+    { .dev = TC0, .id_ch0 = ID_TC0 },
+    { .dev = TC1, .id_ch0 = ID_TC3 }
+};
+
+#define TIMER_0_ISR         isr_tc0
+#define TIMER_1_ISR         isr_tc3
+
+#define TIMER_NUMOF         ARRAY_SIZE(timer_config)
+/** @} */
+
+/**
+ * @name    UART configuration
+ * @{
+ */
+static const uart_conf_t uart_config[] = {
+    {
+        .dev    = (Uart *)USART1,
+        .rx_pin = GPIO_PIN(PB, 2),
+        .tx_pin = GPIO_PIN(PB, 3),
+        .mux    = GPIO_MUX_A,
+        .pmc_id = ID_USART1,
+        .irqn   = USART1_IRQn
+    }
+};
+
+/* define interrupt vectors */
+#define UART_0_ISR          isr_usart1
+
+#define UART_NUMOF          ARRAY_SIZE(uart_config)
+/** @} */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PERIPH_CONF_H */
+/** @} */
