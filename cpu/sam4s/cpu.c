@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Freie Universität Berlin
+ * Copyright (C) 2025 Mesotic SAS
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -7,50 +7,40 @@
  */
 
 /**
- * @ingroup     cpu_sam3
+ * @ingroup     cpu_sam4s
  * @{
  *
  * @file
  * @brief       Implementation of the CPU initialization
  *
- * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Dylan Laduranty <dylan.laduranty@mesotic.com>
  * @}
  */
 
 #include "cpu.h"
+#include "board.h"
 #include "kernel_init.h"
 #include "periph_conf.h"
 #include "periph/init.h"
 #include "stdio_base.h"
-
-/**
- * @brief   Keys needed for editing certain PMC registers
- * @{
- */
-#define WPKEY               (0x504D43)
-#define MORKEY              (0x37)
-/** @} */
-
-/**
- * @brief   Key for writing the SUPC control register
- */
-#define SUPCKEY             (0xa5)
-
-/**
- * @brief   Start-up time for external crystal (will be multiplied by 8)
- */
-#define XTAL_STARTUP        (8U)
-
-/**
- * @brief   PLL is incremented to this value until considered stable
- */
-#define PLL_CNT             (64U)
+#include "busy_wait.h"
+#include "vendor/sam4s/include/component/component_usart.h"
 
 /**
  * @brief Initialize the CPU, set IRQ priorities
  */
 void cpu_init(void)
 {
+
+    PMC->PMC_WPMR = PMC_WPMR_WPKEY_PASSWD;
+    PIOC->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
+    USART1->US_WPMR = US_WPMR_WPKEY_PASSWD;
+    gpio_init(GPIO_PIN(PC, 23), GPIO_OUT);
+    LED0_ON;
+    busy_wait_us(500 * 1000);
+    LED0_OFF;
+    busy_wait_us(500 * 1000);
+    LED0_ON;
     /* disable the watchdog timer */
     WDT->WDT_MR |= WDT_MR_WDDIS;
     /* initialize the Cortex-M core */
@@ -61,10 +51,11 @@ void cpu_init(void)
     EFC1->EEFC_FMR = EEFC_FMR_FWS(CLOCK_FWS);
 
     /* unlock write protect register for PMC module */
-    PMC->PMC_WPMR = PMC_WPMR_WPKEY(WPKEY);
-
+    //PMC->PMC_WPMR = PMC_WPMR_WPKEY(WPKEY);
+#if 0
     /* activate the external crystal */
-    PMC->CKGR_MOR = (CKGR_MOR_KEY(MORKEY) |
+    //CKGR_MOR_KEY(MORKEY) |
+    PMC->CKGR_MOR = (
                      CKGR_MOR_MOSCXTST(XTAL_STARTUP) |
                      CKGR_MOR_MOSCXTEN |
                      CKGR_MOR_MOSCRCEN);
@@ -72,7 +63,8 @@ void cpu_init(void)
     while (!(PMC->PMC_SR & PMC_SR_MOSCXTS));
 
     /* select crystal to clock the main clock */
-    PMC->CKGR_MOR = (CKGR_MOR_KEY(MORKEY) |
+    //CKGR_MOR_KEY(MORKEY) |
+    PMC->CKGR_MOR = (
                      CKGR_MOR_MOSCXTST(XTAL_STARTUP) |
                      CKGR_MOR_MOSCXTEN |
                      CKGR_MOR_MOSCRCEN |
@@ -103,7 +95,7 @@ void cpu_init(void)
     SUPC->SUPC_CR = (SUPC_CR_KEY(SUPCKEY) | SUPC_CR_XTALSEL);
     while (!(SUPC->SUPC_SR & SUPC_SR_OSCSEL_CRYST)) {}
 #endif
-
+#endif /*  0  */
     /* initialize stdio prior to periph_init() to allow use of DEBUG() there */
     early_init();
 

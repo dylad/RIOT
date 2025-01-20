@@ -1,4 +1,4 @@
-CPU = sam3
+CPU = sam4s
 CPU_MODEL = sam4sd32c
 
 # Put defined MCU peripherals here (in alphabetical order)
