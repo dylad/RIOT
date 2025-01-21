@@ -30,19 +30,19 @@ extern "C" {
  * @{
  */
 /* targeted system core clock */
-#define CLOCK_CORECLOCK     (4000000UL)
+#define CLOCK_CORECLOCK     MHZ(84)
 /* external oscillator clock */
-#define CLOCK_EXT_OSC       (12000000UL)
+#define CLOCK_EXT_OSC       MHZ(12)
 /* define PLL configuration
  *
  * The values must fulfill this equation:
  * CORECLOCK = (EXT_OCS / PLL_DIV) * (PLL_MUL + 1)
  */
-#define CLOCK_PLL_MUL       (83)
-#define CLOCK_PLL_DIV       (12)
+#define CLOCK_PLL_MUL       (41)
+#define CLOCK_PLL_DIV       (6)
 
 /* number of wait states before flash read and write operations */
-#define CLOCK_FWS           (4)         /* 4 is save for 84MHz */
+#define CLOCK_FWS           (4)         /* 4 is safe for 84MHz */
 /** @} */
 
 /**
@@ -76,17 +76,17 @@ static const timer_conf_t timer_config[] = {
  */
 static const uart_conf_t uart_config[] = {
     {
-        .dev    = (Uart *)USART1,
+        .dev    = (Uart *)UART1,
         .rx_pin = GPIO_PIN(PB, 2),
         .tx_pin = GPIO_PIN(PB, 3),
         .mux    = GPIO_MUX_A,
-        .pmc_id = ID_USART1,
-        .irqn   = USART1_IRQn
+        .pmc_id = ID_UART1,
+        .irqn   = UART1_IRQn
     }
 };
 
 /* define interrupt vectors */
-#define UART_0_ISR          isr_usart1
+#define UART_0_ISR          isr_uart1
 
 #define UART_NUMOF          ARRAY_SIZE(uart_config)
 /** @} */

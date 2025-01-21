@@ -24,7 +24,13 @@
 #include "periph/init.h"
 #include "stdio_base.h"
 #include "busy_wait.h"
-#include "vendor/sam4s/include/component/component_usart.h"
+
+#define XTAL_STARTUP        (8U)
+#define PLL_CNT             (64U)
+
+#if CLOCK_PLL_MUL < 7 || CLOCK_PLL_MUL > 62
+#error "CLOCK_PLL_MUL has incorrect value"
+#endif
 
 /**
  * @brief Initialize the CPU, set IRQ priorities
@@ -33,14 +39,12 @@ void cpu_init(void)
 {
 
     PMC->PMC_WPMR = PMC_WPMR_WPKEY_PASSWD;
+    PIOA->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
+    PIOB->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
     PIOC->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
-    USART1->US_WPMR = US_WPMR_WPKEY_PASSWD;
-    gpio_init(GPIO_PIN(PC, 23), GPIO_OUT);
-    LED0_ON;
-    busy_wait_us(500 * 1000);
-    LED0_OFF;
-    busy_wait_us(500 * 1000);
-    LED0_ON;
+    TC0->TC_WPMR = TC_WPMR_WPKEY_PASSWD;
+    TC1->TC_WPMR = TC_WPMR_WPKEY_PASSWD;
+
     /* disable the watchdog timer */
     WDT->WDT_MR |= WDT_MR_WDDIS;
     /* initialize the Cortex-M core */
@@ -51,11 +55,11 @@ void cpu_init(void)
     EFC1->EEFC_FMR = EEFC_FMR_FWS(CLOCK_FWS);
 
     /* unlock write protect register for PMC module */
-    //PMC->PMC_WPMR = PMC_WPMR_WPKEY(WPKEY);
-#if 0
+    PMC->PMC_WPMR = PMC_WPMR_WPKEY_PASSWD;
+
     /* activate the external crystal */
-    //CKGR_MOR_KEY(MORKEY) |
     PMC->CKGR_MOR = (
+                     CKGR_MOR_KEY_PASSWD |
                      CKGR_MOR_MOSCXTST(XTAL_STARTUP) |
                      CKGR_MOR_MOSCXTEN |
                      CKGR_MOR_MOSCRCEN);
@@ -63,8 +67,8 @@ void cpu_init(void)
     while (!(PMC->PMC_SR & PMC_SR_MOSCXTS));
 
     /* select crystal to clock the main clock */
-    //CKGR_MOR_KEY(MORKEY) |
     PMC->CKGR_MOR = (
+                     CKGR_MOR_KEY_PASSWD |
                      CKGR_MOR_MOSCXTST(XTAL_STARTUP) |
                      CKGR_MOR_MOSCXTEN |
                      CKGR_MOR_MOSCRCEN |
@@ -95,7 +99,7 @@ void cpu_init(void)
     SUPC->SUPC_CR = (SUPC_CR_KEY(SUPCKEY) | SUPC_CR_XTALSEL);
     while (!(SUPC->SUPC_SR & SUPC_SR_OSCSEL_CRYST)) {}
 #endif
-#endif /*  0  */
+
     /* initialize stdio prior to periph_init() to allow use of DEBUG() there */
     early_init();
 

@@ -21,6 +21,7 @@
 #define PERIPH_CPU_H
 
 #include "cpu.h"
+#include "macros/units.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,7 +90,7 @@ typedef enum {
  */
 enum {
     PA = 0,                      /**< port A */
-    PB = 1 << 0,                 /**< port B */
+    PB = 1,                      /**< port B */
     PC = 1 << 1,                 /**< port C */
     PD = 1 << 2,                 /**< port D */
 };
