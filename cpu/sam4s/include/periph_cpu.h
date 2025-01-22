@@ -42,11 +42,6 @@ typedef uint32_t gpio_t;
 #define CPUID_LEN           (16U)
 
 /**
- * @brief   All SAM4S timers are 32-bit wide
- */
-#define TIMER_MAX_VAL       (0xffffffff)
-
-/**
  * @brief   We use one channel for each defined timer
  *
  * While the peripheral provides three channels, the current interrupt
