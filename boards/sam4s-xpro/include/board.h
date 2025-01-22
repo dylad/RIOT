@@ -29,6 +29,7 @@
 extern "C" {
 #endif
 
+#define CONFIG_ZTIMER_USEC_WIDTH        (16)      /**< TIMER_DEV(0) is 16 bit wide */
 /**
  * @name   LED pin definitions and handlers
  * @{
