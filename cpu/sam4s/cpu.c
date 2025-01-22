@@ -54,25 +54,28 @@ void cpu_init(void)
     EFC0->EEFC_FMR = EEFC_FMR_FWS(CLOCK_FWS);
     EFC1->EEFC_FMR = EEFC_FMR_FWS(CLOCK_FWS);
 
+    /* enable the Cortex M Cache Controller */
+    CMCC->CMCC_CTRL |= CMCC_CTRL_CEN;
+
     /* unlock write protect register for PMC module */
     PMC->PMC_WPMR = PMC_WPMR_WPKEY_PASSWD;
 
     /* activate the external crystal */
-    PMC->CKGR_MOR = (
-                     CKGR_MOR_KEY_PASSWD |
+    PMC->CKGR_MOR = (CKGR_MOR_KEY_PASSWD |
                      CKGR_MOR_MOSCXTST(XTAL_STARTUP) |
                      CKGR_MOR_MOSCXTEN |
                      CKGR_MOR_MOSCRCEN);
+
     /* wait for crystal to be stable */
     while (!(PMC->PMC_SR & PMC_SR_MOSCXTS));
 
     /* select crystal to clock the main clock */
-    PMC->CKGR_MOR = (
-                     CKGR_MOR_KEY_PASSWD |
+    PMC->CKGR_MOR = (CKGR_MOR_KEY_PASSWD |
                      CKGR_MOR_MOSCXTST(XTAL_STARTUP) |
                      CKGR_MOR_MOSCXTEN |
                      CKGR_MOR_MOSCRCEN |
                      CKGR_MOR_MOSCSEL);
+
     /* wait for main oscillator selection to be complete */
     while (!(PMC->PMC_SR & PMC_SR_MOSCSELS));
 
