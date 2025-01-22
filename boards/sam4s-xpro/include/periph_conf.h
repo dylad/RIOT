@@ -30,7 +30,7 @@ extern "C" {
  * @{
  */
 /* targeted system core clock */
-#define CLOCK_CORECLOCK     MHZ(84)
+#define CLOCK_CORECLOCK     MHZ(120)
 /* external oscillator clock */
 #define CLOCK_EXT_OSC       MHZ(12)
 /* define PLL configuration
@@ -38,11 +38,11 @@ extern "C" {
  * The values must fulfill this equation:
  * CORECLOCK = (EXT_OCS / PLL_DIV) * (PLL_MUL + 1)
  */
-#define CLOCK_PLL_MUL       (41)
-#define CLOCK_PLL_DIV       (6)
+#define CLOCK_PLL_MUL       (9)
+#define CLOCK_PLL_DIV       (1)
 
 /* number of wait states before flash read and write operations */
-#define CLOCK_FWS           (4)         /* 4 is safe for 84MHz */
+#define CLOCK_FWS           (5)         /* 5 is safe for 120 MHz */
 /** @} */
 
 /**
