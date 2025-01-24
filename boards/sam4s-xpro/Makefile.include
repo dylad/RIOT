@@ -1,11 +1,6 @@
 # export this module and its includes
 INCLUDES  += -I$(RIOTBOARD)/sam4s-xpro/include
 
-# setup flasher (using EDBG)
-PROGRAMMER ?= edbg
-PROGRAMMERS_SUPPORTED += edbg
-
-PROGRAMMER ?= bossa
-PROGRAMMERS_SUPPORTED += bossa
-BOSSA_VERSION = 1.8
-BOSSA_ARDUINO_PREFLASH = yes
+# setup flasher (using openOCD)
+PROGRAMMER ?= openocd
+PROGRAMMERS_SUPPORTED += openocd edbg

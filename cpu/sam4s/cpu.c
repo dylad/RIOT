@@ -23,13 +23,12 @@
 #include "periph_conf.h"
 #include "periph/init.h"
 #include "stdio_base.h"
-#include "busy_wait.h"
 
 #define XTAL_STARTUP        (8U)
 #define PLL_CNT             (64U)
 
-#if CLOCK_PLL_MUL < 7 || CLOCK_PLL_MUL > 62
-#error "CLOCK_PLL_MUL has incorrect value"
+#if ((CLOCK_PLL_MUL < 7) || (CLOCK_PLL_MUL > 62))
+#error "CLOCK_PLL_MUL has an incorrect value"
 #endif
 
 /**
@@ -47,6 +46,7 @@ void cpu_init(void)
 
     /* disable the watchdog timer */
     WDT->WDT_MR |= WDT_MR_WDDIS;
+
     /* initialize the Cortex-M core */
     cortexm_init();
 
@@ -54,7 +54,7 @@ void cpu_init(void)
     EFC0->EEFC_FMR = EEFC_FMR_FWS(CLOCK_FWS);
     EFC1->EEFC_FMR = EEFC_FMR_FWS(CLOCK_FWS);
 
-    /* enable the Cortex M Cache Controller */
+    /* enable the Cortex-M Cache Controller */
     CMCC->CMCC_CTRL |= CMCC_CTRL_CEN;
 
     /* unlock write protect register for PMC module */
@@ -84,6 +84,7 @@ void cpu_init(void)
                        CKGR_PLLAR_PLLACOUNT(PLL_CNT) |
                        CKGR_PLLAR_MULA(CLOCK_PLL_MUL) |
                        CKGR_PLLAR_DIVA(CLOCK_PLL_DIV));
+
     /* wait for PLL to lock */
     while (!(PMC->PMC_SR & PMC_SR_LOCKA));
 
@@ -99,7 +100,7 @@ void cpu_init(void)
     /* setup the SCLK: switch to external oscillator if applicable */
 #if CLOCK_SCLK_XTAL
     /* enable external oscillator */
-    SUPC->SUPC_CR = (SUPC_CR_KEY(SUPCKEY) | SUPC_CR_XTALSEL);
+    SUPC->SUPC_CR = (SUPC_CR_KEY_PASSWD | SUPC_CR_XTALSEL);
     while (!(SUPC->SUPC_SR & SUPC_SR_OSCSEL_CRYST)) {}
 #endif
 

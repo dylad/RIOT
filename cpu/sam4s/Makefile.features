@@ -2,7 +2,5 @@ CPU_CORE = cortex-m4
 CPU_FAM  = sam4s
 
 FEATURES_PROVIDED += cortexm_mpu
-#FEATURES_PROVIDED += periph_cpuid
-#FEATURES_PROVIDED += periph_hwrng
 
 include $(RIOTCPU)/cortexm_common/Makefile.features
