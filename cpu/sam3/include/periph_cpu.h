@@ -48,6 +48,41 @@ typedef uint32_t gpio_t;
 /** @} */
 
 /**
+ * @name   Use shared I2C functions
+ * @{
+ */
+#define PERIPH_I2C_NEED_READ_REG
+#define PERIPH_I2C_NEED_READ_REGS
+#define PERIPH_I2C_NEED_WRITE_REG
+#define PERIPH_I2C_NEED_WRITE_REGS
+/** @} */
+
+#ifndef DOXYGEN
+/**
+ * @name    Override I2C clock speed values
+ * @{
+ */
+#define HAVE_I2C_SPEED_T
+typedef enum {
+    I2C_SPEED_LOW       = 0U,           /**< low speed mode:    ~10kbit/s */
+    I2C_SPEED_NORMAL    = 100000U,      /**< normal mode:       ~100kbit/s */
+    I2C_SPEED_FAST      = 400000U,      /**< fast mode:         ~400kbit/s */
+    I2C_SPEED_FAST_PLUS = 0U,           /**< fast plus mode:    ~1Mbit/s */
+    I2C_SPEED_HIGH      = 0U,           /**< high speed mode:   ~3.4Mbit/s */
+} i2c_speed_t;
+/** @} */
+
+/**
+ * @name    I2C pin getter functions
+ * @{
+ */
+#define i2c_pin_sda(dev) i2c_config[dev].sda_pin
+#define i2c_pin_scl(dev) i2c_config[dev].scl_pin
+/** @} */
+
+#endif /* ndef DOXYGEN */
+
+/**
  * @brief   Length of the CPU_ID in octets
  */
 #define CPUID_LEN           (16U)
@@ -174,6 +209,16 @@ typedef enum {
 } spi_clk_t;
 /** @} */
 #endif /* ndef DOXYGEN */
+
+typedef struct {
+    Twi *dev;               /**< pointer to the used I2C device */
+    i2c_speed_t speed;      /**< baudrate used for the bus */
+    gpio_t scl_pin;         /**< used SCL pin */
+    gpio_t sda_pin;         /**< used MOSI pin */
+    gpio_mux_t mux;         /**< alternate function (mux) */
+    uint8_t pmc_id;         /**< bit in the PMC register of the device */
+    uint8_t irqn;           /**< interrupt number of the device */
+} i2c_conf_t;
 
 #ifndef DOXYGEN
 /**

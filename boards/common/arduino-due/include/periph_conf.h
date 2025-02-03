@@ -148,6 +148,28 @@ static const spi_conf_t spi_config[] = {
 /** @} */
 
 /**
+* @name     I2C configuration
+* @{
+*/
+static const i2c_conf_t i2c_config[] = {
+    {
+        .dev     = TWI0,
+        .speed   = I2C_SPEED_NORMAL,
+        .scl_pin = GPIO_PIN(PA, 18),
+        .sda_pin = GPIO_PIN(PA, 17),
+        .mux     = GPIO_MUX_A,
+        .pmc_id  = ID_TWI0,
+        .irqn    = TWI0_IRQn,
+    },
+};
+
+/* define interrupt vectors */
+#define I2C_0_ISR          isr_twi0
+
+#define I2C_NUMOF           ARRAY_SIZE(i2c_config)
+/** @} */
+
+/**
  * @name    PWM configuration
  * @{
  */
