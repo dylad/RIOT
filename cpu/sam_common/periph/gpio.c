@@ -166,6 +166,11 @@ int gpio_init(gpio_t pin, gpio_mode_t mode)
     /* power on the corresponding port */
     PMC->PMC_PCER0 = (1 << (port_num + 11));
 
+    /* SAM4s MCUs requires WPKEY for enabling peripheral */
+#ifdef PIO_WPMR_WPKEY_PASSWD
+    port->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
+#endif
+
     /* disable interrupt and clear context (to be safe) */
     port->PIO_IDR = (1 << pin_num);
 #ifdef MODULE_PERIPH_GPIO_IRQ

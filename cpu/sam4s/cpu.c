@@ -36,13 +36,8 @@
  */
 void cpu_init(void)
 {
-
+    /* SAM4s MCUs requires WPKEY for enabling peripheral */
     PMC->PMC_WPMR = PMC_WPMR_WPKEY_PASSWD;
-    PIOA->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
-    PIOB->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
-    PIOC->PIO_WPMR = PIO_WPMR_WPKEY_PASSWD;
-    TC0->TC_WPMR = TC_WPMR_WPKEY_PASSWD;
-    TC1->TC_WPMR = TC_WPMR_WPKEY_PASSWD;
 
     /* disable the watchdog timer */
     WDT->WDT_MR |= WDT_MR_WDDIS;

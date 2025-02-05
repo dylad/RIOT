@@ -82,6 +82,11 @@ int timer_init(tim_t tim, uint32_t freq, timer_cb_t cb, void *arg)
         return -1;
     }
 
+    /* SAM4s requires this WPKEY for enabling peripheral */
+#ifdef TC_WPMR_WPKEY_PASSWD
+    dev(tim)->TC_WPMR = TC_WPMR_WPKEY_PASSWD;
+#endif
+
     /* enable the device clock */
     clk_en(tim);
 
