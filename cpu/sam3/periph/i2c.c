@@ -29,10 +29,13 @@
 #include "periph_conf.h"
 #include "periph/i2c.h"
 #include "ztimer.h"
-#include <sys/reent.h>
+#include "macros/units.h"
 
 #define ENABLE_DEBUG        0
 #include "debug.h"
+
+#define I2C_TIMEOUT_CYCLES      1000        /* clock cycles */
+#define I2C_IRQ_FLAGS   TWI_IER_ARBLST | TWI_IER_RXRDY | TWI_IER_TXRDY;
 
 typedef enum {
     I2C_READY,
@@ -47,6 +50,7 @@ typedef struct {
     mutex_t dev_lock;
     mutex_t isr_lock;
     i2c_state_t state;
+    ztimer_t timeout_timer;
 } i2c_internal_t;
 
 static i2c_internal_t _i2c_dev[I2C_NUMOF];
@@ -87,10 +91,58 @@ static void _setup_bus_speed(i2c_t dev, i2c_speed_t speed)
     assert(0);
 }
 
+static void _i2c_transfer_timeout(void *arg)
+{
+    i2c_t dev = (i2c_t)(uintptr_t)arg;
+
+    /* set result to timeout */
+    _i2c_dev[dev].state = I2C_TIMEOUT;
+
+    /* wake up the thread that is waiting for the results */
+    mutex_unlock(&_i2c_dev[dev].isr_lock);
+}
+
+static void _setup_timeout(i2c_t dev)
+{
+    ztimer_t* timer = &_i2c_dev[dev].timeout_timer;
+#if defined(MODULE_ZTIMER_USEC)
+    timer->callback = _i2c_transfer_timeout,
+    timer->arg = (void *)dev;
+    uint32_t timeout = ((I2C_TIMEOUT_CYCLES * MHZ(1)) / i2c_config[dev].speed) + 1;
+    ztimer_set(ZTIMER_USEC, timer, timeout);
+#elif defined(MODULE_ZTIMER_MSEC)
+    timer->callback = _i2c_transfer_timeout;
+    timer->arg = (void *)dev;
+    uint32_t timeout = ((I2C_TIMEOUT_CYCLES * KHZ(1)) / i2c_config[dev].speed) + 1;
+    ztimer_set(ZTIMER_MSEC, timer, timeout);
+#else
+#warning "I2C timeout handling requires to use ztimer_msec or ztimer_usec module"
+#endif
+}
+
+static void _remove_timeout(i2c_t dev)
+{
+    ztimer_t* timer = &_i2c_dev[dev].timeout_timer;
+#if defined(MODULE_ZTIMER_USEC)
+    ztimer_remove(ZTIMER_USEC, timer);
+#elif defined(MODULE_ZTIMER_MSEC)
+    ztimer_remove(ZTIMER_MSEC, timer);
+#endif
+}
+
 void _wait_for_interrupts(i2c_t dev)
 {
+    /* Setup a timeout timer */
+    _setup_timeout(dev);
+
+    /* Enable IRQs */
+    bus(dev)->TWI_IER = I2C_IRQ_FLAGS;
+
     /* Wait for interrupts events */
     mutex_lock(&_i2c_dev[dev].isr_lock);
+
+    /* Remove timer */
+    _remove_timeout(dev);
 }
 
 void _read_data(i2c_t dev, uint8_t *data, size_t len)
