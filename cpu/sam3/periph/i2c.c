@@ -149,8 +149,6 @@ void _read_data(i2c_t dev, uint8_t *data, size_t len)
 {
     size_t count = 0;
 
-    /* Enable interrupts */
-
     /* Start read sequence */
     
     /* Read data buffer. */
@@ -160,6 +158,10 @@ void _read_data(i2c_t dev, uint8_t *data, size_t len)
         if (_i2c_dev[dev].state == I2C_DATA_AVAIL) {
             data[count] = bus(dev)->TWI_RHR & TWI_RHR_RXDATA_Msk;
             count++;
+        }
+        else {
+            /* Leave early if an error occurs */
+            return;
         }
     }
 }
@@ -229,14 +231,15 @@ int i2c_read_bytes(i2c_t dev, uint16_t addr,
         return -EINVAL;
     }
 
-    /* Send I2C Start command if needed */
-    if (!(flags & I2C_NOSTART)) {
-        /* Send Start sequence */
-        bus(dev)->TWI_CR = TWI_CR_START;
-    }
-
     /* Set device address and direction */
     bus(dev)->TWI_MMR = TWI_MMR_DADR(addr) | TWI_MMR_MREAD;
+
+    /* Send I2C Start command if needed */
+    if (!(flags & I2C_NOSTART)) {
+        bus(dev)->TWI_CR = TWI_CR_START;
+    }
+    /* Wait for I2C Start and device address to be sent (or timeout) */
+    _wait_for_interrupts(dev);
 
     /* Read data buffer. */
 #if 0
@@ -250,7 +253,6 @@ int i2c_read_bytes(i2c_t dev, uint16_t addr,
 
     /* Send I2C Stop command if needed */
     if (!(flags & I2C_NOSTOP)) {
-        /* Send Start sequence */
         bus(dev)->TWI_CR = TWI_CR_STOP;
     }
 
