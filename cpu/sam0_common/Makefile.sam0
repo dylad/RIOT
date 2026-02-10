@@ -1,0 +1,38 @@
+PKG_NAME = mchp_dfp_hal
+PKG_URL = https://packs.download.microchip.com
+PKG_EXT = atpack
+PKG_LICENSE = Apache-2.0
+# CPU_FAM_UPPERCASE and FAMILY variables are pass to this Makefile by cpu/sam0_common/Makefile.include
+PKG_FAMILY = $(CPU_FAM_UPPERCASE)
+PKG_ZIP_URL = $(PKG_URL)/$(PKG_ZIP_NAME)
+PKG_SOURCE_DIR = $(BUILD_DIR)/$(PKG_NAME)
+VENDOR_FOLDER = $(PKG_SOURCE_DIR)/vendor
+
+# SAML21
+PKG_VERSION_l21 = 3.8.229
+PKG_SHA512_l21 = c1599e4abb819c8adc59034c053e4b8382d426be6284e15f7cc9e76cca22b6b3b75e8e9285dfff563515c160399486a614c1f992055ab61898c56ab872ebc35e
+
+PKG_SHA512 = $(PKG_SHA512_$(FAMILY))
+PKG_VERSION = $(PKG_VERSION_$(FAMILY))
+
+PKG_ZIP_NAME = Microchip.$(PKG_FAMILY)_DFP.$(PKG_VERSION).$(PKG_EXT)
+
+print-debug:
+	@echo '----------------'
+	@echo 'FAMILY:$(FAMILY)'
+	@echo 'PKG_SHA512:$(PKG_SHA512)'
+	@echo 'CPU FAMILY: 1:$(CPU_FAM) 2:$(CPU_MODEL) 3:$(CPU_MODEL_UPPERCASE) 4: $(PKG_FAMILY)'
+	@echo '----------------'
+
+all:	print-debug
+	@mkdir -p $(VENDOR_FOLDER)/zip
+	$(Q)$(DOWNLOAD_TO_FILE) $(VENDOR_FOLDER)/zip $(PKG_ZIP_URL) $(PKG_SHA512)
+	$(Q)$(UNZIP_HERE)  -d $(VENDOR_FOLDER)/zip $(VENDOR_FOLDER)/zip/$(PKG_ZIP_NAME)
+	@mkdir -p $(VENDOR_FOLDER)/$(CPU_FAM)
+	$(Q)for inc in $(VENDOR_FOLDER)/zip/*/include; do \
+		dev=$$(basename $$(dirname $$inc)); \
+		dst=$(VENDOR_FOLDER)/$(CPU_FAM)/$$dev; \
+		mkdir -p $$dst; \
+		cp -ru $$inc $$dst/; \
+	done
+

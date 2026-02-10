@@ -20,48 +20,11 @@
 #include "cpu_conf_common.h"
 #include "modules.h"
 
-#if IS_USED(MODULE_MCHP_DFP_HAL)
-#   if defined(CPU_SAML21A)
-#       include "saml21a1/include/sam.h"
-#   elif defined(CPU_SAML21B)
-#       include "saml21b/include/sam.h"
-#   endif
-#else
-#   if defined(CPU_SAMD10)
-#       include "vendor/samd10/include/samd10.h"
-#   elif defined(CPU_SAMD20)
-#       include "vendor/samd20/include/samd20.h"
-#   elif defined(CPU_SAMD20B)
-#       include "vendor/samd20/include_b/samd20.h"
-#   elif defined(CPU_SAMD21A)
-#       include "vendor/samd21/include_a/samd21.h"
-#   elif defined(CPU_SAMD21B)
-#       include "vendor/samd21/include_b/samd21.h"
-#   elif defined(CPU_SAMD21C)
-#       include "vendor/samd21/include_c/samd21.h"
-#   elif defined(CPU_SAMD21D)
-#       include "vendor/samd21/include_d/samd21.h"
-#   elif defined(CPU_SAMD51)
-#       include "vendor/samd51/include/samd51.h"
-#   elif defined(CPU_SAME51)
-#       include "vendor/same51/include/same51.h"
-#   elif defined(CPU_SAME54)
-#       include "vendor/same54/include/same54.h"
-#   elif defined(CPU_SAML10)
-#       include "vendor/saml10/include/sam.h"
-#   elif defined(CPU_SAML11)
-#       include "vendor/saml11/include/sam.h"
-#   elif defined(CPU_SAML21A)
-#       include "vendor/saml21/include/saml21.h"
-#   elif defined(CPU_SAML21B)
-#       include "vendor/saml21/include_b/saml21.h"
-#   elif defined(CPU_SAMR21)
-#       include "vendor/samr21/include/samr21.h"
-#   elif defined(CPU_SAMR30)
-#       include "vendor/samr30/include/samr30.h"
-#   elif defined(CPU_SAMR34)
-#       include "vendor/samr34/include/samr34.h"
-#   endif
+
+#if defined(CPU_SAML21A)
+#   include "saml21a1/include/sam.h"
+#elif defined(CPU_SAML21B)
+#   include "saml21b/include/sam.h"
 #endif
 
 #ifdef __cplusplus
@@ -73,7 +36,7 @@ extern "C" {
  * @{
  */
 #define CPU_DEFAULT_IRQ_PRIO            (1U)
-#define CPU_IRQ_NUMOF                   PERIPH_COUNT_IRQn
+#define CPU_IRQ_NUMOF                   PERIPH_MAX_IRQn + 1
 #define CPU_FLASH_BASE                  FLASH_ADDR
 
 #ifdef CPU_COMMON_SAML1X

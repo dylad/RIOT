@@ -15,7 +15,12 @@ ifneq (,$(filter periph_sdmmc,$(USEMODULE)))
 endif
 
 # include sam0 common periph drivers
-USEMODULE += sam0_common_periph
+#USEMODULE += sam0_common_periph
+ifneq (,$(filter mchp_periph_ng,$(USEMODULE)))
+  USEMODULE += sam0_common_periph_ng
+else
+  USEMODULE += sam0_common_periph
+endif
 
 ifneq (,$(filter sam0_eth,$(USEMODULE)))
   USEMODULE += iolist

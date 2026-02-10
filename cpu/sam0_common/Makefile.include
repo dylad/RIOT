@@ -34,7 +34,12 @@ CFLAGS += -DDONT_USE_PREDEFINED_PERIPHERALS_HANDLERS
 # For Cortex-M cpu we use the common cortexm.ld linker script
 LINKER_SCRIPT ?= cortexm.ld
 
-INCLUDES += -I$(RIOTCPU)/sam0_common/include
+ifneq (,$(filter mchp_dfp_hal,$(USEMODULE)))
+  INCLUDES += -I$(RIOTCPU)/sam0_common/include_ng
+else
+  INCLUDES += -I$(RIOTCPU)/sam0_common/include
+endif
+
 
 ifneq (,$(filter sam0_eth,$(USEMODULE)))
   INCLUDES += -I$(RIOTCPU)/sam0_common/sam0_eth/
@@ -42,3 +47,17 @@ endif
 
 PSEUDOMODULES += periph_rtc
 PSEUDOMODULES += periph_rtt
+
+# Fetch all nRF52 vendor headers using the package mechanism. This rule is called all
+# the time to ensure it's correctly updated when versions in the packages are
+# updated.
+PSEUDOMODULES += mchp_dfp_hal
+
+SAM0FAM_INCLUDE_DIR = $(BUILD_DIR)/mchp_dfp_hal/vendor/$(CPU_FAM)
+SAM0FAM_INCLUDE_FILE = $(SAM0FAM_INCLUDE_DIR)/$(CPU_FAM).h
+
+INCLUDES += -I$(SAM0FAM_INCLUDE_DIR)
+$(SAM0FAM_INCLUDE_FILE): FORCE $(CLEAN)
+	$(Q)+$(MAKE) -f $(RIOTBASE)/cpu/sam0_common/Makefile.sam0 CPU_FAM_UPPERCASE=$(call uppercase_and_underscore,$(CPU_FAM)) FAMILY=$(FAMILY)
+
+BUILDDEPS += $(SAM0FAM_INCLUDE_FILE)
