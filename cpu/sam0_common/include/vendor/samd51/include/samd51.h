@@ -61,4 +61,6 @@
   #error Library does not support the specified device.
 #endif
 
+#include "compat_samd51.h"
+
 #endif /* _SAMD51_ */

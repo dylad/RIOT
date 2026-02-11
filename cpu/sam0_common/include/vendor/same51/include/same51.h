@@ -53,4 +53,6 @@
   #error Library does not support the specified device.
 #endif
 
+#include "compat_same51.h"
+
 #endif /* _SAME51_ */

@@ -47,4 +47,6 @@
   #error Library does not support the specified device.
 #endif
 
+#include "compat_same54.h"
+
 #endif /* _SAME54_ */
